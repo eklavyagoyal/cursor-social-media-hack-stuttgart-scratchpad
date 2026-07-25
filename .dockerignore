@@ -1,0 +1,25 @@
+.git
+.gitignore
+node_modules
+.next
+out
+tmp
+
+# secrets never enter the image — Coolify injects env at runtime
+.env
+.env.*
+!.env.example
+
+# planning docs and scratch, not needed to run
+docs
+*.md
+!README.md
+scripts/verify-render.mts
+scripts/seed-demo.mts
+
+# demo fixtures ARE needed (the cached path) — public/ stays.
+# only the raw source clip is dead weight in the image:
+public/demo/demo-raw.mp4
+
+.vercel
+.DS_Store
