@@ -1,6 +1,7 @@
 import { writeCopy } from "@/lib/drop";
 import { generateImages } from "@/lib/images";
 import { sseResponse } from "@/lib/sse";
+import { rememberDrop } from "@/lib/store";
 import type { BrandGenome, Drop } from "@/lib/types";
 import { speak } from "@/lib/voice";
 
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
       carousel: { slides: copy.carousel.slides },
       status: "draft",
     };
+    rememberDrop(drop); // /api/publish only ships Drops it can find here
     say({ t: "drop", drop }); // stream text first — images render behind it
 
     // 2. Images and voice in parallel; neither is allowed to kill the other.
@@ -87,6 +89,7 @@ export async function POST(req: Request) {
       say({ t: "warn", msg: "voiceover unavailable — check ELEVENLABS_VOICE_ID" });
     }
 
+    rememberDrop(drop); // re-store with images + VO attached
     say({ t: "drop", drop });
   });
 }

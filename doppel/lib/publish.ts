@@ -1,4 +1,5 @@
 import { AtpAgent } from "@atproto/api";
+import { assertFetchableMedia } from "./store";
 import type { Drop } from "./types";
 
 export type PostResult = { platform: string; url: string; at: string };
@@ -27,7 +28,11 @@ export async function postBluesky(drop: Drop): Promise<PostResult> {
   let embed: any;
   const img = drop.carousel.slides.find((s) => s.imageUrl)?.imageUrl;
   if (img) {
-    const bytes = new Uint8Array(await (await fetch(img)).arrayBuffer());
+    const safe = assertFetchableMedia(img); // our server fetches this: allowlist the host
+    const r = await fetch(safe, { redirect: "error", signal: AbortSignal.timeout(20_000) });
+    const buf = await r.arrayBuffer();
+    if (buf.byteLength > 4_000_000) throw new Error("media: image over 4 MB");
+    const bytes = new Uint8Array(buf);
     const { data } = await agent.uploadBlob(bytes, { encoding: "image/jpeg" });
     embed = {
       $type: "app.bsky.embed.images",
