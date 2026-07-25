@@ -1,5 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import Firecrawl from "@mendable/firecrawl-js";
+import OpenAI from "openai";
 import type { BrandGenome } from "./brand";
 
 /**
@@ -17,7 +17,8 @@ import type { BrandGenome } from "./brand";
  * than by the model's idea of a Reel.
  */
 
-const MODEL = "claude-opus-5";
+// Same override as lib/brand.ts and lib/brief.ts — one knob for the whole app.
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
 
 /** Cost guard — each search is a Firecrawl credit and the day has a budget. */
 const MAX_QUERIES = 4;
@@ -151,18 +152,22 @@ export function fallbackQueries(genome: BrandGenome): string[] {
 }
 
 async function planQueries(genome: BrandGenome): Promise<string[]> {
-  if (!process.env.ANTHROPIC_API_KEY) return fallbackQueries(genome);
+  if (!process.env.OPENAI_API_KEY) return fallbackQueries(genome);
   try {
-    const res = await new Anthropic().messages.create({
+    const res = await new OpenAI().responses.create({
       model: MODEL,
-      max_tokens: 600,
-      system: QUERY_SYSTEM,
-      output_config: { format: { type: "json_schema", schema: QUERY_SCHEMA } },
-      messages: [{ role: "user", content: genome.context }],
+      max_output_tokens: 2000,
+      reasoning: { effort: "low" },
+      input: [
+        { role: "system", content: QUERY_SYSTEM },
+        { role: "user", content: genome.context },
+      ],
+      text: {
+        format: { type: "json_schema", name: "search_queries", strict: true, schema: QUERY_SCHEMA },
+      },
     });
-    const block = res.content.find((b) => b.type === "text");
-    if (!block || block.type !== "text") throw new Error("keine Antwort");
-    const { queries } = JSON.parse(block.text) as { queries: string[] };
+    if (res.incomplete_details || !res.output_text) throw new Error("keine verwertbare Antwort");
+    const { queries } = JSON.parse(res.output_text) as { queries: string[] };
     const clean = queries.map(trimQuery).filter(Boolean).slice(0, MAX_QUERIES);
     return clean.length ? clean : fallbackQueries(genome);
   } catch (err) {
@@ -276,30 +281,33 @@ async function deriveAngles(
   genome: BrandGenome,
   refs: ReelReference[],
 ): Promise<ContentAngle[]> {
-  const client = new Anthropic();
-
   const evidence = refs
     .map((r, i) => `${i + 1}. [${r.platform}] ${r.title}\n   ${r.snippet}\n   ${r.url}`)
     .join("\n");
 
-  const res = await client.messages.create({
+  const res = await new OpenAI().responses.create({
     model: MODEL,
-    max_tokens: 3000,
-    system: SYSTEM,
-    output_config: { format: { type: "json_schema", schema: ANGLE_SCHEMA } },
-    messages: [
+    // Reasoning tokens come out of this budget; a truncated response is invalid JSON.
+    max_output_tokens: 8000,
+    reasoning: { effort: "low" },
+    input: [
+      { role: "system", content: SYSTEM },
       {
         role: "user",
         content: `MARKEN-PROFIL\n${genome.context}\n\nGEFUNDENE KURZVIDEOS AUS DEM THEMENFELD\n${evidence}`,
       },
     ],
+    text: {
+      format: { type: "json_schema", name: "content_angles", strict: true, schema: ANGLE_SCHEMA },
+    },
   });
 
-  const block = res.content.find((b) => b.type === "text");
-  if (!block || block.type !== "text") throw new Error("research: keine Antwort von Claude");
+  if (res.incomplete_details) {
+    throw new Error(`Antwort abgebrochen (${res.incomplete_details.reason})`);
+  }
+  if (!res.output_text) throw new Error("Das Modell hat keinen Text zurückgegeben.");
 
-  const parsed = JSON.parse(block.text) as { angles: ContentAngle[] };
-  return parsed.angles;
+  return (JSON.parse(res.output_text) as { angles: ContentAngle[] }).angles;
 }
 
 /** The grounding block appended to the brand context before /api/brief. */
@@ -356,13 +364,13 @@ export async function researchMarket(genome: BrandGenome): Promise<MarketResearc
 
   // Evidence is useful on its own. Without a key we return it rather than
   // failing the step — the creator can still pick a topic from what they see.
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return {
       queries,
       references,
       angles: [],
       context: toContext(references, []),
-      degraded: "Ohne ANTHROPIC_API_KEY nur Fundstellen, keine abgeleiteten Winkel.",
+      degraded: "Ohne OPENAI_API_KEY nur Fundstellen, keine abgeleiteten Winkel.",
     };
   }
 
