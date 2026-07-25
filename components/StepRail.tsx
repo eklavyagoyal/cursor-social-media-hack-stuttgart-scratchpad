@@ -35,10 +35,7 @@ export function StepRail({
   const done = steps.filter((s) => s.status === "done").length;
 
   return (
-    <nav
-      aria-label="Durchlauf"
-      className="flex h-full flex-col gap-6 border-border lg:border-r lg:pr-6"
-    >
+    <nav aria-label="Durchlauf" className="flex flex-col gap-6">
       <div>
         <p className="eyebrow">Durchlauf</p>
         <p className="display mt-2 text-[19px]">
@@ -102,7 +99,7 @@ function StepRow({
             {step.title}
           </span>
           {step.summary && !showTrace && (
-            <span className="mt-0.5 block truncate font-mono text-[10.5px] text-muted">
+            <span className="mt-0.5 block truncate font-mono text-[11px] text-muted">
               {step.summary}
             </span>
           )}
@@ -162,7 +159,7 @@ function RailTrace({ lines, running }: { lines: TraceLine[]; running: boolean })
         return (
           <div
             key={i}
-            className={`animate-land flex gap-2 font-mono text-[11px] leading-[1.7] ${tone}`}
+            className={`animate-land flex gap-2 font-mono text-[12px] leading-[1.65] ${tone}`}
           >
             <span
               className={`w-2.5 shrink-0 ${
