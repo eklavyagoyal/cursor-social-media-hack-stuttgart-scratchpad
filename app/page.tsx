@@ -15,6 +15,18 @@ type Phase = "idle" | "running" | "done" | "error";
 
 const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`;
 
+/** SDK errors are written for whoever wrote the SDK. Nobody on stage should read one. */
+function humanError(msg: string): string {
+  if (/authentication|api[- _]?key|unauthor/i.test(msg)) {
+    return "Kein gültiger API-Schlüssel konfiguriert — siehe .env.local.";
+  }
+  if (/fetch failed|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|network/i.test(msg)) {
+    return "Keine Verbindung zum Dienst — Netz weg?";
+  }
+  if (/rate.?limit|429/i.test(msg)) return "Rate-Limit erreicht. Kurz warten.";
+  return msg;
+}
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [genome, setGenome] = useState<BrandGenome | null>(null);
@@ -130,10 +142,22 @@ export default function Home() {
 
       applyGenome(json.genome as BrandGenome);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = humanError(e instanceof Error ? e.message : String(e));
       brandTrace.fail(msg);
-      setError(`${msg} — du kannst den Schritt überspringen und nur mit dem Thema weitermachen.`);
+      setError(msg);
       setBrandPhase("error");
+    }
+  }
+
+  /** Stage recovery: any brand failure is one click away from the cached profile. */
+  async function useCachedGenome() {
+    try {
+      const g = await cachedGenome();
+      setError(null);
+      setNotice("Gespeichertes Marken-Profil geladen — nicht von dieser URL gelesen.");
+      applyGenome(g);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -168,7 +192,7 @@ export default function Home() {
         `Caption + ${b.hashtags.length} Hashtags`,
       );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = humanError(e instanceof Error ? e.message : String(e));
       briefTrace.fail(msg);
       setError(msg);
       setBriefPhase("error");
@@ -205,7 +229,7 @@ export default function Home() {
         `mp4 ${r.render.width}×${r.render.height} · ${mb(r.render.sizeBytes)}`,
       );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = humanError(e instanceof Error ? e.message : String(e));
       processTrace.fail(msg);
       setError(msg);
       setProcessPhase("error");
@@ -228,7 +252,7 @@ export default function Home() {
       setPublicUrl(json.publicUrl);
       setPublishPhase("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanError(e instanceof Error ? e.message : String(e)));
       setPublishPhase("error");
     }
   }
@@ -288,14 +312,27 @@ export default function Home() {
           </button>
         </div>
 
-        {!briefUnlocked && brandPhase !== "running" && (
-          <button
-            type="button"
-            onClick={() => setBrandSkipped(true)}
-            className="mt-4 font-mono text-[11px] text-muted underline decoration-dotted underline-offset-4 hover:text-foreground"
-          >
-            überspringen, nur mit einem Thema arbeiten
-          </button>
+        {brandPhase !== "running" && !genome && (
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+            {!briefUnlocked && (
+              <button
+                type="button"
+                onClick={() => setBrandSkipped(true)}
+                className="font-mono text-[11px] text-muted underline decoration-dotted underline-offset-4 hover:text-foreground"
+              >
+                überspringen, nur mit einem Thema arbeiten
+              </button>
+            )}
+            {brandPhase === "error" && (
+              <button
+                type="button"
+                onClick={useCachedGenome}
+                className="font-mono text-[11px] text-accent underline decoration-dotted underline-offset-4 hover:text-foreground"
+              >
+                gespeichertes Marken-Profil verwenden
+              </button>
+            )}
+          </div>
         )}
 
         {brandTrace.lines.length > 0 && (
