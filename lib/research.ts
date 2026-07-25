@@ -51,7 +51,7 @@ export type ContentAngle = {
   why: string;
   /** The literal first sentence. */
   hook: string;
-  /** How it is shot, e.g. "Talking head am Rechner, Schnitt auf den Bildschirm". */
+  /** How it is shot, e.g. "Talking head at the computer, cut to the screen". */
   format: string;
   /** Whether the creator speaks on camera or a voiceover carries it. */
   narration: "on-camera" | "voiceover" | "mixed";
@@ -166,7 +166,7 @@ async function planQueries(genome: BrandGenome): Promise<string[]> {
         format: { type: "json_schema", name: "search_queries", strict: true, schema: QUERY_SCHEMA },
       },
     });
-    if (res.incomplete_details || !res.output_text) throw new Error("keine verwertbare Antwort");
+    if (res.incomplete_details || !res.output_text) throw new Error("no usable answer");
     const { queries } = JSON.parse(res.output_text) as { queries: string[] };
     const clean = queries.map(trimQuery).filter(Boolean).slice(0, MAX_QUERIES);
     return clean.length ? clean : fallbackQueries(genome);
@@ -337,7 +337,7 @@ function toContext(refs: ReelReference[], angles: ContentAngle[]): string {
 }
 
 export async function researchMarket(genome: BrandGenome): Promise<MarketResearch> {
-  if (!process.env.FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY fehlt in .env.local");
+  if (!process.env.FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY missing from .env.local");
 
   const queries = await planQueries(genome);
   const t0 = Date.now();
@@ -358,7 +358,7 @@ export async function researchMarket(genome: BrandGenome): Promise<MarketResearc
       references,
       angles: [],
       context: "",
-      degraded: "Keine aktuellen Kurzvideos im Themenfeld gefunden.",
+      degraded: "Found no recent short video in this niche.",
     };
   }
 
@@ -370,7 +370,7 @@ export async function researchMarket(genome: BrandGenome): Promise<MarketResearc
       references,
       angles: [],
       context: toContext(references, []),
-      degraded: "Ohne OPENAI_API_KEY nur Fundstellen, keine abgeleiteten Winkel.",
+      degraded: "Without OPENAI_API_KEY you get findings only, no derived angles.",
     };
   }
 
@@ -384,7 +384,7 @@ export async function researchMarket(genome: BrandGenome): Promise<MarketResearc
       references,
       angles: [],
       context: toContext(references, []),
-      degraded: `Winkel konnten nicht abgeleitet werden: ${err instanceof Error ? err.message : String(err)}`,
+      degraded: `Could not derive angles: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
 }

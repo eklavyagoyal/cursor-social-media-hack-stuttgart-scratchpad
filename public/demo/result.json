@@ -8,89 +8,95 @@
   },
   "rawUrl": "/demo/demo-raw.mp4",
   "transcript": {
-    "text": "Die meisten rösten einmal. ähm Wir dreimal. Und das ist eigentlich Faulheit nur andersrum.",
-    "languageCode": "de",
+    "text": "Most roasters roast once. um We roast three times. And that's basically laziness just backwards.",
+    "languageCode": "en",
     "words": [
       {
-        "text": "Die",
+        "text": "Most",
         "start": 0.8,
-        "end": 1,
+        "end": 1.05,
         "type": "word"
       },
       {
-        "text": "meisten",
-        "start": 1,
-        "end": 1.4,
+        "text": "roasters",
+        "start": 1.05,
+        "end": 1.5,
         "type": "word"
       },
       {
-        "text": "rösten",
-        "start": 1.4,
+        "text": "roast",
+        "start": 1.5,
         "end": 1.8,
         "type": "word"
       },
       {
-        "text": "einmal.",
+        "text": "once.",
         "start": 1.8,
         "end": 2.3,
         "type": "word"
       },
       {
-        "text": "ähm",
+        "text": "um",
         "start": 3.1,
         "end": 3.5,
         "type": "word"
       },
       {
-        "text": "Wir",
+        "text": "We",
         "start": 5.9,
-        "end": 6.15,
+        "end": 6.1,
         "type": "word"
       },
       {
-        "text": "dreimal.",
-        "start": 6.15,
-        "end": 6.8,
+        "text": "roast",
+        "start": 6.1,
+        "end": 6.4,
         "type": "word"
       },
       {
-        "text": "Und",
-        "start": 7,
+        "text": "three",
+        "start": 6.4,
+        "end": 6.7,
+        "type": "word"
+      },
+      {
+        "text": "times.",
+        "start": 6.7,
         "end": 7.2,
         "type": "word"
       },
       {
-        "text": "das",
-        "start": 7.2,
-        "end": 7.4,
-        "type": "word"
-      },
-      {
-        "text": "ist",
+        "text": "And",
         "start": 7.4,
         "end": 7.6,
         "type": "word"
       },
       {
-        "text": "eigentlich",
+        "text": "that's",
         "start": 7.6,
-        "end": 8.1,
+        "end": 7.85,
         "type": "word"
       },
       {
-        "text": "Faulheit",
-        "start": 8.1,
-        "end": 8.7,
+        "text": "basically",
+        "start": 7.85,
+        "end": 8.35,
         "type": "word"
       },
       {
-        "text": "nur",
+        "text": "laziness",
+        "start": 8.35,
+        "end": 8.95,
+        "type": "word"
+      },
+      {
+        "text": "just",
         "start": 9.9,
         "end": 10.1,
         "type": "word"
       },
       {
-        "text": "andersrum.",
+        "text": "backwards.",
         "start": 10.1,
         "end": 10.9,
         "type": "word"
@@ -99,8 +105,8 @@
   },
   "plan": {
     "sourceDuration": 12,
-    "outDuration": 5.72,
-    "removedSeconds": 6.28,
+    "outDuration": 5.97,
+    "removedSeconds": 6.03,
     "keep": [
       {
         "start": 0.73,
@@ -108,7 +114,7 @@
       },
       {
         "start": 5.83,
-        "end": 8.77
+        "end": 9.02
       },
       {
         "start": 9.83,
@@ -125,10 +131,10 @@
         "start": 2.3699999999999997,
         "end": 5.83,
         "reason": "filler",
-        "text": "ähm"
+        "text": "um"
       },
       {
-        "start": 8.77,
+        "start": 9.02,
         "end": 9.83,
         "reason": "silence"
       },
@@ -143,32 +149,32 @@
     {
       "start": 0.07000000000000006,
       "end": 1.07,
-      "text": "DIE MEISTEN RÖSTEN"
+      "text": "MOST ROASTERS ROAST"
     },
     {
       "start": 1.07,
       "end": 1.71,
-      "text": "EINMAL."
+      "text": "ONCE."
     },
     {
       "start": 1.71,
-      "end": 2.6099999999999994,
-      "text": "WIR DREIMAL."
+      "end": 2.51,
+      "text": "WE ROAST THREE"
     },
     {
-      "start": 2.8099999999999996,
-      "end": 3.4099999999999993,
-      "text": "UND DAS IST"
+      "start": 2.51,
+      "end": 3.01,
+      "text": "TIMES."
     },
     {
-      "start": 3.4099999999999993,
-      "end": 4.849999999999999,
-      "text": "EIGENTLICH FAULHEIT NUR"
+      "start": 3.21,
+      "end": 4.159999999999999,
+      "text": "AND THAT'S BASICALLY"
     },
     {
-      "start": 4.849999999999999,
-      "end": 5.6499999999999995,
-      "text": "ANDERSRUM."
+      "start": 4.159999999999999,
+      "end": 5.8999999999999995,
+      "text": "LAZINESS JUST BACKWARDS."
     }
   ],
   "render": {
@@ -176,7 +182,7 @@
     "publicUrl": "/demo/demo.mp4",
     "width": 1080,
     "height": 1920,
-    "duration": 5.8,
-    "sizeBytes": 329846
+    "duration": 6.033333,
+    "sizeBytes": 346678
   }
 }

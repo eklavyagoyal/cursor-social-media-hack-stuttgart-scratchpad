@@ -92,6 +92,6 @@
     }
   ],
   "angles": [],
-  "context": "Was im Themenfeld gerade läuft (Suchtreffer aus dem letzten Monat, als Beleg, nicht zum Abschreiben):\n- [instagram] Job description Requisition Title CREO Cabling Harness ...\n- [instagram] Manufacturing Engineer Jobs in the USA – Fresh Openings ...\n- [instagram] The British University in Egypt (BUE) on Instagram ...\n- [instagram] Did you know that every major engineering discipline plays a ...\n- [instagram] ⚙️ Process Engineering Training Efficient ...\n- [instagram] Whirlpool Corporation on Instagram: \"Meet Chris and Ryan ...\n- [instagram] The retirement wave isn't new. But it's becoming harder to ...\n- [instagram] Power Systems Engineer: €55k–75k",
-  "degraded": "Ohne OPENAI_API_KEY nur Fundstellen, keine abgeleiteten Winkel."
+  "context": "What the niche is running right now (search hits from the last month, as evidence, not to copy):\n- [instagram] Job description Requisition Title CREO Cabling Harness ...\n- [instagram] Manufacturing Engineer Jobs in the USA – Fresh Openings ...\n- [instagram] The British University in Egypt (BUE) on Instagram ...\n- [instagram] Did you know that every major engineering discipline plays a ...\n- [instagram] ⚙️ Process Engineering Training Efficient ...\n- [instagram] Whirlpool Corporation on Instagram: \"Meet Chris and Ryan ...\n- [instagram] The retirement wave isn't new. But it's becoming harder to ...\n- [instagram] Power Systems Engineer: €55k–75k",
+  "degraded": "Without OPENAI_API_KEY you get findings only, no derived angles."
 }

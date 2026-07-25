@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       targets?: PublishTarget[];
     };
 
-    if (!body.slug) return NextResponse.json({ error: "slug fehlt." }, { status: 400 });
+    if (!body.slug) return NextResponse.json({ error: "slug missing." }, { status: 400 });
     const caption = body.caption ?? "";
     const targets = body.targets?.length ? body.targets : (["instagram", "telegram"] as PublishTarget[]);
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         {
           error: publishSecretConfigured()
             ? "Operator-Freigabe falsch."
-            : "PUBLISH_SECRET ist nicht gesetzt — Posten ist deshalb komplett gesperrt.",
+            : "PUBLISH_SECRET is not set — publishing is therefore locked entirely.",
         },
         { status: 401 },
       );
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
           (target): PublishResult => ({
             target,
             status: "skipped",
-            error: "PUBLISH_ENABLED ist false — Sicherheitsschalter aktiv.",
+            error: "PUBLISH_ENABLED is false — the safety switch is on.",
           }),
         ),
       });

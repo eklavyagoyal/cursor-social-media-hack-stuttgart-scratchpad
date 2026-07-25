@@ -50,7 +50,7 @@ export async function publishToInstagram(
     return {
       target: "instagram",
       status: "queued",
-      error: "IG_ACCESS_TOKEN / IG_USER_ID fehlen — Post liegt in der Warteschlange.",
+      error: "IG_ACCESS_TOKEN / IG_USER_ID missing — the post is queued.",
     };
   }
 
@@ -118,7 +118,7 @@ export async function publishToTelegram(
   const chatId = process.env.TELEGRAM_CHANNEL;
 
   if (!token || !chatId) {
-    return { target: "telegram", status: "skipped", error: "Telegram nicht konfiguriert." };
+    return { target: "telegram", status: "skipped", error: "Telegram not configured." };
   }
 
   try {

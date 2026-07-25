@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not a valid URL." }, { status: 400 });
     }
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return NextResponse.json({ error: `Schema ${parsed.protocol} nicht erlaubt.` }, { status: 400 });
+      return NextResponse.json({ error: `Scheme ${parsed.protocol} not allowed.` }, { status: 400 });
     }
 
     const genome = await crawlBrandGenome(parsed.toString());

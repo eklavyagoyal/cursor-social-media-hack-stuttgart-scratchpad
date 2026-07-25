@@ -4,7 +4,11 @@
   "name": "Legacy AI",
   "tagline": "Don't let the answer retire with the expert.",
   "voice": {
-    "adjectives": ["plain", "uncompromising", "technically exact"],
+    "adjectives": [
+      "plain",
+      "uncompromising",
+      "technically exact"
+    ],
     "petPhrases": [
       "Don't let the answer retire with the expert.",
       "answers carry citations, or none at all",
@@ -29,7 +33,13 @@
     "emojiPolicy": "none"
   },
   "look": {
-    "palette": ["#000000", "#FFFFFF", "#9A9DA1", "#C7973E", "#201F23"],
+    "palette": [
+      "#000000",
+      "#FFFFFF",
+      "#9A9DA1",
+      "#C7973E",
+      "#201F23"
+    ],
     "typographyVibe": "Display face for statements, mono for technical labels and source citations.",
     "imageryStyle": "Near-black surfaces, industrial detail, anatomical metaphor (Cortex, Lens, Atlas, Larynx, Pharynx, Thalamus). No stock photography."
   },
@@ -58,5 +68,5 @@
     "{Claim}, or nothing.",
     "And when it doesn't know, it says so."
   ],
-  "context": "Marke: Legacy AI — Don't let the answer retire with the expert.\nTonalität: plain, uncompromising, technically exact\nSatzbau: Short declaratives. Headline ist ein vollständiger Satz mit hartem Punkt. Klammer-Einschub für den ehrlichen Vorbehalt. Verweigert Superlative komplett — nennt die Einschränkung vor dem Nutzen.\nEmojis: none\nZielperson: A production engineering lead at an industrial manufacturer whose most experienced people are retiring faster than they can be replaced.\n\nFormulierungen, die die Marke wirklich benutzt — übernimm davon, wo es passt. Sie sind englisch, weil die Marke so schreibt: im deutschen Skript darfst du sie als Zitat stehen lassen oder eng am Original übersetzen, aber erfinde keine neuen Slogans dazu.\n- \"Don't let the answer retire with the expert.\"\n- \"answers carry citations, or none at all\"\n- \"Cited, or nothing.\"\n- \"Honesty is the default, not a setting.\"\n- \"And when it doesn't know, it says so.\"\n- \"Every company runs on knowledge that was never written down.\"\n- \"once they're gone, it's gone\"\n- \"One brain. Many senses.\"\n\nWörter, die NIE vorkommen dürfen: revolutionary, game-changing, seamless, leverage, cutting-edge, unlock, AI-powered, empower\nBelegbare Fakten, nichts dazuerfinden: rund 70% des Firmenwissens ist tacit, steckt in Menschen statt Dokumenten · Voice-first Experten-Interviews, 30 bis 60 Minuten · Postgres row-level security statt Anwendungscode · in Deutschland gehostet, GDPR-first, append-only audit trail · im Einsatz bei einem Production Engineering Lead eines großen Automotive-OEM\nThemenfelder: Wissen, das nie aufgeschrieben wurde · die Verrentungswelle industrieller Expertise · zitierte Antworten statt selbstsicherer Erfindung · Permissions by construction · EU-Hosting und GDPR · Human-in-the-loop vor dem Speichern\n\nBewährte Hook-Muster:\n- Don't let {valuable thing} retire with {person}.\n- Every company runs on {thing} that was never written down.\n- Most tools {do the easy thing}. The hard part is {the real thing}.\n- {Claim}, or nothing.\n- And when it doesn't know, it says so."
+  "context": "Brand: Legacy AI — Don't let the answer retire with the expert.\nVoice: plain, uncompromising, technically exact\nSentence style: Short declaratives. Headline is a full sentence with a hard full stop. Parenthetical aside for the honest caveat. Refuses superlatives entirely — states the limitation before the benefit.\nEmojis: none\nTarget person: A production engineering lead at an industrial manufacturer whose most experienced people are retiring faster than they can be replaced.\nPhrases the brand actually uses — reuse them where they fit:\n- \"Don't let the answer retire with the expert.\"\n- \"answers carry citations, or none at all\"\n- \"Cited, or nothing.\"\n- \"Honesty is the default, not a setting.\"\n- \"And when it doesn't know, it says so.\"\n- \"Every company runs on knowledge that was never written down.\"\n- \"once they're gone, it's gone\"\n- \"One brain. Many senses.\"\nWords that must NEVER appear: revolutionary, game-changing, seamless, leverage, cutting-edge, unlock, AI-powered, empower\nVerifiable facts, invent nothing beyond them: Roughly 70% of what an organisation knows is tacit, held in people and not documents · Voice-first expert interviews, 30 to 60 minutes, capturing the reasoning and not just the result · Permissions enforced in Postgres row-level security, not in application code that can be bypassed · Hosted in Germany, GDPR-first, append-only audit trail, per-person export and deletion · In use with a Production Engineering Lead at a major automotive OEM\nContent pillars: Knowledge that was never written down · The retirement wave in industrial expertise · Cited answers versus confident invention · Permission-aware by construction, not bolted on · EU hosting and GDPR-first governance · Human-in-the-loop review before anything is stored\n\nProven hook patterns:\n- Don't let {valuable thing} retire with {person}.\n- Every company runs on {thing} that was never written down.\n- Most tools {do the easy thing}. The hard part is {the real thing}.\n- {Claim}, or nothing.\n- And when it doesn't know, it says so."
 }

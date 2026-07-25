@@ -1,50 +1,61 @@
 {
-  "id": "brief-fixture",
-  "topic": "Warum unsere Espressomischung dreimal geröstet wird",
-  "hook": "Die meisten Röstereien rösten einmal. Wir dreimal — und das hat einen unangenehmen Grund.",
-  "totalSeconds": 28,
+  "id": "brief-ms0brx4i",
+  "topic": "Knowledge that was never written down",
+  "hook": "Every company runs on knowledge that was never written down.",
+  "totalSeconds": 30,
   "shots": [
     {
       "n": 1,
       "label": "Hook",
       "seconds": 4,
-      "say": "Die meisten rösten einmal. Wir dreimal. Und das ist eigentlich Faulheit — nur andersrum.",
-      "camera": "Handy vertikal auf Brusthöhe, Arm ausgestreckt, du stehst direkt vor der Trommel. Gesicht füllt das obere Drittel.",
-      "onScreen": "3× geröstet"
+      "say": "Every company runs on knowledge that was never written down.",
+      "camera": "Phone vertical at eye height, arm’s length away. Look straight into the lens and stay still.",
+      "onScreen": "Every company runs on knowledge that was never written down."
     },
     {
       "n": 2,
       "label": "Problem",
-      "seconds": 8,
-      "say": "Einmal rösten heißt: du entscheidest dich für einen Kompromiss. Die Bohne, die Süße braucht, kriegt dieselbe Hitze wie die, die Säure braucht.",
-      "camera": "Handy auf die Bohnenschale legen, langsam hochziehen bis auf Augenhöhe. Eine Bewegung, nicht schneiden."
+      "seconds": 6,
+      "say": "Around seventy percent of company knowledge is tacit. It lives in people, not documents.",
+      "camera": "Keep the phone at eye height. Take one slow step toward the camera on the second sentence.",
+      "onScreen": "Around 70% is tacit."
     },
     {
       "n": 3,
-      "label": "Beweis",
-      "seconds": 10,
-      "say": "Also trennen wir. Jede Sorte kommt einzeln rein, mit eigener Kurve. Erst danach mischen wir. Das dauert dreimal so lang und kostet dreimal so viel Gas.",
-      "camera": "Nah auf die Hände, während du drei getrennte Schalen nebeneinander schiebst. Handy auf Tischhöhe, leicht schräg von oben.",
-      "onScreen": "3 Kurven, 1 Mischung"
+      "label": "Consequence",
+      "seconds": 5,
+      "say": "Your senior engineer knows why the line fails on cold Mondays. The manual does not.",
+      "camera": "Move the phone to chest height for a tighter head-and-shoulders frame. Hold it steady.",
+      "onScreen": "The manual does not know."
     },
     {
       "n": 4,
+      "label": "Method",
+      "seconds": 8,
+      "say": "A voice-first interview captures that context in thirty to sixty minutes. A human checks it before anything is stored.",
+      "camera": "Sit at a desk with the phone propped vertically against a monitor, about 60 centimetres away. Gesture once toward an open notebook.",
+      "onScreen": "Interview. Review. Store."
+    },
+    {
+      "n": 5,
       "label": "Payoff",
-      "seconds": 6,
-      "say": "Deswegen schmeckt der Espresso auch mit Milch noch nach irgendwas. Probier's, und wenn du keinen Unterschied merkst, sag's mir ehrlich.",
-      "camera": "Zurück auf Augenhöhe, Tasse ins Bild halten, direkt in die Kamera sprechen. Letzte Sekunde still stehen bleiben."
+      "seconds": 7,
+      "say": "The result is not perfect memory. It is a cited answer. And when it doesn’t know, it says so.",
+      "camera": "Return to the original eye-level position. Pause before the final sentence and hold eye contact.",
+      "onScreen": "Cited, or nothing."
     }
   ],
-  "caption": "Dreimal rösten klingt nach Angeberei. Ist aber nur die Konsequenz aus einem Problem, das die meisten wegmischen.\n\nJede Sorte bekommt ihre eigene Kurve, gemischt wird erst danach. Dauert länger, kostet mehr Gas, schmeckt aber auch durch Milch durch.",
+  "caption": "The answer is already on your factory floor. It may never have reached a document.\n\nVoice-first expert interviews capture tacit knowledge before retirement. Human review comes before storage. Answers carry citations, or none at all.\n\nDon’t let the answer retire with the expert.",
   "hashtags": [
-    "#espresso",
-    "#kaffeerösterei",
-    "#specialtycoffee",
-    "#handwerk",
-    "#stuttgart"
+    "#KnowledgeManagement",
+    "#Manufacturing",
+    "#ProductionEngineering",
+    "#TacitKnowledge",
+    "#IndustrialKnowledge",
+    "#EngineeringLeadership"
   ],
-  "cta": "Sag mir in den Kommentaren, ob du den Unterschied merkst.",
-  "soundIdea": "Originalton — Trommelgeräusch im Hintergrund ist das halbe Video.",
-  "bestPostTime": "Di–Do 18:30–20:00",
-  "createdAt": "2026-07-25T08:00:00.000Z"
+  "cta": "Which answer in your plant still exists in only one person’s head?",
+  "soundIdea": "Originalton. No music. Keep the pauses and room tone.",
+  "bestPostTime": "Tue 07:00-08:30 local time",
+  "createdAt": "2026-07-25T12:08:13.938Z"
 }

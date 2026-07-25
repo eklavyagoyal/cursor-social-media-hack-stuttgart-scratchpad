@@ -142,7 +142,7 @@ export function ReelPreview({ rawUrl, plan, captions }: Props) {
           {outTime.toFixed(1)}s / {plan.outDuration.toFixed(1)}s
         </span>
         <button type="button" onClick={restart} className="hover:text-foreground">
-          ↺ von vorn
+          ↺ from the start
         </button>
       </div>
     </div>

@@ -99,7 +99,7 @@ function normalize(raw: Record<string, unknown>, topic: string): ShootBrief {
 }
 
 export async function generateBrief(input: BriefInput): Promise<ShootBrief> {
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY fehlt in .env.local");
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY missing from .env.local");
   const client = new OpenAI();
 
   const parts = [`THEMA: ${input.topic}`];

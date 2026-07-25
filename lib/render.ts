@@ -22,7 +22,7 @@ function run(cmd: string, args: string[], cwd?: string): Promise<string> {
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
     child.on("error", (e) =>
-      reject(new Error(`${cmd} konnte nicht gestartet werden: ${e.message}`)),
+      reject(new Error(`${cmd} could not be started: ${e.message}`)),
     );
     child.on("close", (code) => {
       if (code === 0) resolve(out);
@@ -42,7 +42,7 @@ export async function probe(input: string): Promise<ProbeResult> {
   ]);
   const json = JSON.parse(raw);
   const video = json.streams?.find((s: { codec_type: string }) => s.codec_type === "video");
-  if (!video) throw new Error("Keine Videospur in der Datei gefunden.");
+  if (!video) throw new Error("No video track found in the file.");
 
   return {
     duration: Number(json.format?.duration ?? 0),

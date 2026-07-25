@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     const source = await probe(rawPath);
     if (!source.hasAudio) {
       return NextResponse.json(
-        { error: "Der Clip hat keine Tonspur — ohne Ton gibt es keine Untertitel und keinen Schnitt." },
+        { error: "The clip has no audio track — without sound there are no captions and no cuts." },
         { status: 400 },
       );
     }

@@ -6,6 +6,7 @@
  *   npm run seed:demo -- clip.mov     # your footage, real transcription if keys exist
  */
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { buildCaptions, buildCutPlan } from "../lib/cut";
@@ -60,17 +61,17 @@ if (input && process.env.ELEVENLABS_API_KEY) {
   console.log("▸ transcribing with Scribe");
   const audio = await extractAudio(rawPath, `tmp/audio/${SLUG}.mp3`);
   transcript = await transcribeFile(audio);
-  console.log(`  ${transcript.words.length} Wörter · ${transcript.languageCode}`);
+  console.log(`  ${transcript.words.length} words · ${transcript.languageCode}`);
 } else {
   console.log("▸ using the canned transcript (no key, or no input file)");
-  transcript = { text: FIXTURE_WORDS.map((w) => w.text).join(" "), languageCode: "de", words: FIXTURE_WORDS };
+  transcript = { text: FIXTURE_WORDS.map((w) => w.text).join(" "), languageCode: "en", words: FIXTURE_WORDS };
 }
 
 const plan = buildCutPlan(transcript.words, source.duration);
 const captions = buildCaptions(transcript.words, plan);
 console.log(
   `▸ ${plan.sourceDuration.toFixed(1)}s → ${plan.outDuration.toFixed(1)}s ` +
-    `(${plan.cuts.length} Schnitte, ${captions.length} Untertitelgruppen)`,
+    `(${plan.cuts.length} cuts, ${captions.length} caption groups)`,
 );
 
 console.log("▸ rendering");
@@ -95,7 +96,20 @@ const result: ProcessResult = {
 };
 
 await writeFile(path.join(DEMO, "result.json"), JSON.stringify(result, null, 2), "utf8");
-await writeFile(path.join(DEMO, "brief.json"), JSON.stringify(FIXTURE_BRIEF, null, 2), "utf8");
 
-console.log(`\n✓ Demo-Pfad liegt bereit. ${render.width}x${render.height} · ${render.duration.toFixed(1)}s`);
-console.log("  public/demo/result.json + public/demo/brief.json");
+/**
+ * The fixture brief is a stand-in for when there is nothing better. A brief that
+ * was actually generated against the committed genome.json is better, and re-running
+ * this script must not silently trade it for a coffee roastery that has nothing to
+ * do with the cached brand — the demo path is only worth having if it tells one story.
+ */
+const briefPath = path.join(DEMO, "brief.json");
+if (existsSync(briefPath)) {
+  console.log("▸ keeping the existing brief.json (delete it to fall back to the fixture)");
+} else {
+  await writeFile(briefPath, JSON.stringify(FIXTURE_BRIEF, null, 2), "utf8");
+  console.log("▸ wrote the fixture brief");
+}
+
+console.log(`\n✓ Cached demo path is ready. ${render.width}x${render.height} · ${render.duration.toFixed(1)}s`);
+console.log("  public/demo/result.json");

@@ -37,7 +37,7 @@ export async function transcribeFile(
   options: TranscribeOptions = {},
 ): Promise<Transcript> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) throw new Error("ELEVENLABS_API_KEY fehlt in .env.local");
+  if (!apiKey) throw new Error("ELEVENLABS_API_KEY missing from .env.local");
 
   const bytes = await readFile(filePath);
   const form = new FormData();

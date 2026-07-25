@@ -159,8 +159,14 @@ async function scrapeVoiceSurface(url: string): Promise<string> {
   return corpus.slice(0, 120_000);
 }
 
-/** Render the structured genome into the grounding string the brief prompt wants. */
-function toContext(g: Omit<BrandGenome, "context">): string {
+/**
+ * Render the structured genome into the grounding string the brief prompt wants.
+ *
+ * Exported so a committed genome fixture can have its context rebuilt from its own
+ * fields instead of a hand-edited copy — the cached demo path drifted into a stale
+ * German block once already, and a second source of truth is how that happens.
+ */
+export function toContext(g: Omit<BrandGenome, "context">): string {
   const { voice, substance } = g;
   return [
     `Brand: ${g.name}${g.tagline ? ` — ${g.tagline}` : ""}`,

@@ -93,7 +93,7 @@ console.log(
 );
 
 const drift = Math.abs(result.duration - plan.outDuration);
-if (result.width !== 1080 || result.height !== 1920) throw new Error("Falsche Ausgabegröße.");
-if (drift > 0.6) throw new Error(`Dauer weicht ab: erwartet ${plan.outDuration.toFixed(2)}s, ist ${result.duration.toFixed(2)}s`);
+if (result.width !== 1080 || result.height !== 1920) throw new Error("Wrong output dimensions.");
+if (drift > 0.6) throw new Error(`Duration drifted: expected ${plan.outDuration.toFixed(2)}s, got ${result.duration.toFixed(2)}s`);
 
 console.log(`\n✓ Kette funktioniert. Drift ${drift.toFixed(3)}s. Datei: ${result.path}`);

@@ -32,7 +32,7 @@ const isNum = (v: unknown) => typeof v === "number" && Number.isFinite(v);
 const isArr = (v: unknown, min = 1) => Array.isArray(v) && v.length >= min;
 
 function need(obj: Record<string, unknown>, path: string, ok: boolean) {
-  assert(ok, `${path} fehlt oder hat den falschen Typ`);
+  assert(ok, `${path} is missing or has the wrong type`);
 }
 
 async function getJson(path: string): Promise<Record<string, any>> {
@@ -41,7 +41,7 @@ async function getJson(path: string): Promise<Record<string, any>> {
   try {
     return (await res.json()) as Record<string, any>;
   } catch {
-    throw new Error(`GET ${path} ist kein gültiges JSON`);
+    throw new Error(`GET ${path} is not valid JSON`);
   }
 }
 
@@ -53,14 +53,14 @@ await check("health · ffmpeg + ffprobe", async () => {
     render?: { ffmpeg?: boolean; ffprobe?: boolean };
     config?: Record<string, boolean>;
   };
-  assert(body.render?.ffmpeg === true, "ffmpeg fehlt im PATH — Rendern unmöglich");
-  assert(body.render?.ffprobe === true, "ffprobe fehlt im PATH");
+  assert(body.render?.ffmpeg === true, "ffmpeg missing from PATH — rendering impossible");
+  assert(body.render?.ffprobe === true, "ffprobe missing from PATH");
   assert(body.status === "ok", `status=${body.status} (erwartet "ok")`);
   assert(res.status === 200, `HTTP ${res.status}`);
   const off = Object.entries(body.config ?? {})
     .filter(([, v]) => !v)
     .map(([k]) => k);
-  return off.length ? `ok · ohne Key: ${off.join(", ")}` : "ok · alle Keys gesetzt";
+  return off.length ? `ok · no key: ${off.join(", ")}` : "ok · every key set";
 });
 
 // ── 2. cached fixtures the UI reads ─────────────────────────────────────────
@@ -76,7 +76,7 @@ await check("demo/genome.json · BrandGenome", async () => {
   need(g, "look.palette", isArr(g.look?.palette, 5));
   assert(
     g.look.palette.every((h: unknown) => typeof h === "string" && /^#[0-9a-f]{6}$/i.test(h)),
-    "look.palette enthält etwas, das kein #RRGGBB ist",
+    "look.palette holds something that is not #RRGGBB",
   );
   need(g, "look.typographyVibe", isStr(g.look?.typographyVibe));
   need(g, "look.imageryStyle", isStr(g.look?.imageryStyle));
@@ -129,14 +129,14 @@ await check("demo/result.json · ProcessResult", async () => {
   for (const f of ["width", "height", "duration", "sizeBytes"]) {
     need(r, `render.${f}`, isNum(r.render?.[f]));
   }
-  assert(r.render.width === 1080 && r.render.height === 1920, "Export ist nicht 1080×1920");
+  assert(r.render.width === 1080 && r.render.height === 1920, "export is not 1080×1920");
   return `${r.plan.sourceDuration.toFixed(1)}s → ${r.plan.outDuration.toFixed(1)}s · ${r.captions.length} Untertitel`;
 });
 
 await check("demo/research.json · MarketResearch", async () => {
   const res = await fetch(`${BASE}/demo/research.json`);
   // Optional: the offline path still works without it, the Markt step is empty.
-  if (res.status === 404) return "nicht vorhanden — Markt-Schritt bleibt leer";
+  if (res.status === 404) return "not present — the market step stays empty";
   assert(res.ok, `GET /demo/research.json → ${res.status}`);
   const r = (await res.json()) as Record<string, any>;
   need(r, "queries", isArr(r.queries));
@@ -150,8 +150,8 @@ await check("demo/research.json · MarketResearch", async () => {
     need(r, `angles[${i}].hook`, isStr(a.hook));
     need(r, `angles[${i}].cuts`, isArr(a.cuts));
   });
-  const note = r.angles.length ? `${r.angles.length} Winkel` : "nur Fundstellen (kein Key beim Cachen)";
-  return `${r.references.length} Fundstellen · ${note}`;
+  const note = r.angles.length ? `${r.angles.length} angles` : "findings only (no key when cached)";
+  return `${r.references.length} findings · ${note}`;
 });
 
 // ── 3. the media the cached path actually plays ─────────────────────────────
@@ -165,23 +165,23 @@ for (const [label, path] of [
     const type = res.headers.get("content-type") ?? "";
     assert(type.includes("video/mp4"), `content-type ist "${type}", erwartet video/mp4`);
     const bytes = (await res.arrayBuffer()).byteLength;
-    assert(bytes > 100_000, `nur ${(bytes / 1024).toFixed(0)} KB (erwartet >100 KB)`);
+    assert(bytes > 100_000, `only ${(bytes / 1024).toFixed(0)} KB (expected >100 KB)`);
     return `${(bytes / 1024).toFixed(0)} KB · ${type}`;
   });
 }
 
 // ── 4. security regression: publishing is not open to the internet ──────────
-await check("publish ohne Secret → 401", async () => {
+await check("publish without secret → 401", async () => {
   const res = await fetch(`${BASE}/api/publish`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ slug: "demo", caption: "smoke test — darf nie rausgehen" }),
+    body: JSON.stringify({ slug: "demo", caption: "smoke test — must never go out" }),
   });
   assert(
     res.status === 401,
-    `HTTP ${res.status} statt 401 — die Route ist offen, jeder kann auf den echten Account posten`,
+    `HTTP ${res.status} instead of 401 — the route is open, anyone can post to the real account`,
   );
-  return "401, wie es sein muss";
+  return "401, as it must be";
 });
 
 // ── report ──────────────────────────────────────────────────────────────────

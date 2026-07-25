@@ -22,7 +22,7 @@ export async function toPublicUrl(filePath: string, localUrlPath: string): Promi
   if (!base) {
     throw new Error(
       "No public upload possible: set BLOB_READ_WRITE_TOKEN (Vercel Blob) " +
-        "oder PUBLIC_BASE_URL (z.B. ein cloudflared-Tunnel auf localhost:3000).",
+        "or PUBLIC_BASE_URL (e.g. a cloudflared tunnel to localhost:3000).",
     );
   }
   return new URL(localUrlPath, base).toString();
