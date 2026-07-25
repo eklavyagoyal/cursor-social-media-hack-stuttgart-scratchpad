@@ -41,7 +41,8 @@ curl -s https://creator.legacy-ai.de/api/health | jq
 ### Env vars in Coolify
 
 ```bash
-ANTHROPIC_API_KEY=            # /api/brief + /api/brand die without it
+OPENAI_API_KEY=               # /api/brief + /api/brand die without it
+OPENAI_MODEL=                 # optional, default gpt-5.6
 FIRECRAWL_API_KEY=
 ELEVENLABS_API_KEY=
 ELEVENLABS_VOICE_ID=

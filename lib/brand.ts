@@ -1,5 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import Firecrawl from "@mendable/firecrawl-js";
+import OpenAI from "openai";
 
 /**
  * One URL -> the brand's voice, look and substance.
@@ -13,7 +13,8 @@ import Firecrawl from "@mendable/firecrawl-js";
  * lines come back using phrases the creator verifiably already uses.
  */
 
-const MODEL = "claude-opus-5";
+// Overridable so credits can be traded for quality without a deploy.
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
 
 /** Pages that carry voice, as opposed to nav and legal boilerplate. */
 const VOICEY =
@@ -22,7 +23,8 @@ const VOICEY =
 export type BrandGenome = {
   sourceUrl: string;
   name: string;
-  tagline?: string;
+  /** Null when the site has no usable tagline — strict schemas can't omit it. */
+  tagline?: string | null;
   voice: {
     /** Exactly 3 concrete adjectives — "blunt", never "professional". */
     adjectives: string[];
@@ -45,7 +47,9 @@ const SCHEMA = {
   type: "object",
   properties: {
     name: { type: "string" },
-    tagline: { type: "string" },
+    // Strict structured outputs require every property in `required`, so an
+    // optional field has to be spelled as a nullable one instead.
+    tagline: { type: ["string", "null"] },
     voice: {
       type: "object",
       properties: {
@@ -80,7 +84,7 @@ const SCHEMA = {
     },
     hooks: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 5 },
   },
-  required: ["name", "voice", "look", "substance", "hooks"],
+  required: ["name", "tagline", "voice", "look", "substance", "hooks"],
   additionalProperties: false,
 } as const;
 
@@ -184,19 +188,33 @@ export async function crawlBrandGenome(url: string): Promise<BrandGenome> {
     JSON.stringify({ evt: "dep.ok", dep: "firecrawl", ms: Date.now() - t0, chars: corpus.length }),
   );
 
-  const anthropic = new Anthropic();
-  const res = await anthropic.messages.create({
+  const openai = new OpenAI();
+  const res = await openai.responses.create({
     model: MODEL,
-    max_tokens: 4000,
-    system: SYSTEM,
-    output_config: { format: { type: "json_schema", schema: SCHEMA as any } },
-    messages: [{ role: "user", content: `SOURCE: ${target}\n\n${corpus}` }],
+    // Reasoning tokens are billed against this budget, so it needs headroom the
+    // genome itself never uses — a truncated response is invalid JSON.
+    max_output_tokens: 8000,
+    reasoning: { effort: "low" },
+    input: [
+      { role: "system", content: SYSTEM },
+      { role: "user", content: `SOURCE: ${target}\n\n${corpus}` },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "brand_genome",
+        strict: true,
+        schema: SCHEMA as unknown as Record<string, unknown>,
+      },
+    },
   });
 
-  const block = res.content.find((b) => b.type === "text");
-  if (!block || block.type !== "text") throw new Error("brand: no text block in response");
+  if (res.incomplete_details) {
+    throw new Error(`brand: response truncated (${res.incomplete_details.reason})`);
+  }
+  if (!res.output_text) throw new Error("brand: no text in response");
 
-  const raw = JSON.parse(block.text) as Omit<BrandGenome, "context" | "sourceUrl">;
+  const raw = JSON.parse(res.output_text) as Omit<BrandGenome, "context" | "sourceUrl">;
   const genome = { ...raw, sourceUrl: target };
   return { ...genome, context: toContext(genome) };
 }

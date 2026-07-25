@@ -1,7 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import type { ShootBrief, Shot } from "./types";
 
-const MODEL = "claude-opus-5";
+// Overridable so credits can be traded for quality without a deploy.
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
 
 const SHOT_SCHEMA = {
   type: "object",
@@ -11,9 +12,14 @@ const SHOT_SCHEMA = {
     seconds: { type: "number", description: "Target length in seconds" },
     say: { type: "string", description: "Exactly what to say on camera. Spoken language, no bullet points." },
     camera: { type: "string", description: "Concrete framing and movement for a single phone, no crew." },
-    onScreen: { type: "string", description: "Optional short on-screen text." },
+    // Strict structured outputs require every property in `required`, so an
+    // optional field has to be spelled as a nullable one instead.
+    onScreen: {
+      type: ["string", "null"],
+      description: "Short on-screen text, or null when the shot needs none.",
+    },
   },
-  required: ["n", "label", "seconds", "say", "camera"],
+  required: ["n", "label", "seconds", "say", "camera", "onScreen"],
   additionalProperties: false,
 } as const;
 
@@ -90,8 +96,8 @@ function normalize(raw: Record<string, unknown>, topic: string): ShootBrief {
 }
 
 export async function generateBrief(input: BriefInput): Promise<ShootBrief> {
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt in .env.local");
-  const client = new Anthropic();
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY fehlt in .env.local");
+  const client = new OpenAI();
 
   const parts = [`THEMA: ${input.topic}`];
   if (input.targetSeconds) parts.push(`ZIELLÄNGE: ca. ${input.targetSeconds} Sekunden`);
@@ -101,16 +107,29 @@ export async function generateBrief(input: BriefInput): Promise<ShootBrief> {
     );
   }
 
-  const res = await client.messages.create({
+  const res = await client.responses.create({
     model: MODEL,
-    max_tokens: 4000,
-    system: SYSTEM,
-    output_config: { format: { type: "json_schema", schema: BRIEF_SCHEMA } },
-    messages: [{ role: "user", content: parts.join("\n\n") }],
+    // Reasoning tokens are billed against this budget, so it needs headroom the
+    // brief itself never uses — a truncated response is invalid JSON.
+    max_output_tokens: 8000,
+    // Writing a shoot brief is a creative task, not an analytical one. Low effort
+    // keeps it fast, and latency is what the room feels during a live demo.
+    reasoning: { effort: "low" },
+    input: [
+      { role: "system", content: SYSTEM },
+      { role: "user", content: parts.join("\n\n") },
+    ],
+    text: {
+      format: { type: "json_schema", name: "shoot_brief", strict: true, schema: BRIEF_SCHEMA },
+    },
   });
 
-  const block = res.content.find((b) => b.type === "text");
-  if (!block || block.type !== "text") throw new Error("Claude hat keinen Text zurückgegeben.");
+  if (res.incomplete_details) {
+    throw new Error(
+      `Antwort abgebrochen (${res.incomplete_details.reason}) — OPENAI_MODEL oder Token-Budget prüfen.`,
+    );
+  }
+  if (!res.output_text) throw new Error("Das Modell hat keinen Text zurückgegeben.");
 
-  return normalize(JSON.parse(block.text) as Record<string, unknown>, input.topic);
+  return normalize(JSON.parse(res.output_text) as Record<string, unknown>, input.topic);
 }

@@ -1,5 +1,5 @@
 {
-  "_note": "Real output shape, grounded in the actual copy at legacy-ai.de and the real palette from legacy-web/app/globals.css. Nothing here is invented. Regenerate with POST /api/brand once ANTHROPIC_API_KEY is set.",
+  "_note": "Real output shape, grounded in the actual copy at legacy-ai.de and the real palette from legacy-web/app/globals.css. Nothing here is invented. Regenerate with POST /api/brand once OPENAI_API_KEY is set.",
   "sourceUrl": "https://legacy-ai.de",
   "name": "Legacy AI",
   "tagline": "Don't let the answer retire with the expert.",

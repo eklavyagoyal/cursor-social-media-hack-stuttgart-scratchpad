@@ -46,7 +46,7 @@ export async function GET() {
     render: bins,
     // informational: degraded but demoable
     config: {
-      anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+      openai: Boolean(process.env.OPENAI_API_KEY),
       firecrawl: Boolean(process.env.FIRECRAWL_API_KEY),
       elevenlabs: Boolean(process.env.ELEVENLABS_API_KEY),
       publishEnabled: process.env.PUBLISH_ENABLED === "true",
