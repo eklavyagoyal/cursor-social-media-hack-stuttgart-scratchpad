@@ -89,15 +89,15 @@ const QUERY_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const QUERY_SYSTEM = `Du planst Suchanfragen, um herauszufinden, welche Kurzvideos im Themenfeld einer Marke gerade laufen.
+const QUERY_SYSTEM = `You plan search queries to find out which short videos are currently running in a brand's niche.
 
-Du bekommst das Marken-Profil. Gib 3-4 Suchanfragen zurück.
+You get the brand profile. Return 3-4 search queries.
 
-Regeln:
-- Suche NUR nach dem Thema. Keine Wörter wie "Reel", "Short", "Hook", "viral", "Instagram" — die Suche ist bereits auf die Plattformen eingeschränkt, und solche Wörter liefern Ratgeber ÜBER Kurzvideos statt Inhalte AUS dem Themenfeld.
-- Schreibe die Anfragen in der Sprache, die die Zielperson spricht. Sitzt die Zielgruppe in der deutschen Industrie, dann deutsch — auch wenn die Website englisch ist.
-- 4 bis 8 Wörter, konkrete Substantive aus der Lebenswelt der Zielperson, keine Marketingbegriffe.
-- Jede Anfrage deckt einen anderen Aspekt ab. JSON only.`;
+Rules:
+- Search ONLY for the subject. No words like "reel", "short", "hook", "viral", "Instagram" — the search is already restricted to those platforms, and such words return advice ABOUT short video instead of content FROM the niche.
+- Write each query in the language the target person actually speaks. If the audience sits in German industry, write German — even when the website is English. The query language decides what we find, so it follows the audience, not the interface.
+- 4 to 8 words, concrete nouns from the target person's world, no marketing terms.
+- Each query covers a different aspect. JSON only.`;
 
 /** Strip a sentence down to something a search engine matches well. */
 function trimQuery(s: string): string {
@@ -264,18 +264,18 @@ const ANGLE_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SYSTEM = `Du bist Content-Stratege für vertikale Kurzvideos und liest Suchergebnisse wie ein Redakteur.
+const SYSTEM = `You are a content strategist for vertical short video, and you read search results like an editor.
 
-Du bekommst (1) das Marken-Profil eines Accounts und (2) echte Suchtreffer zu kurzen Videos aus seinem Themenfeld. Daraus leitest du 3-4 konkrete Dreh-Ideen ab.
+You get (1) the brand profile of an account and (2) real search hits for short videos from its niche. From those you derive 3-4 concrete shooting ideas.
 
-Regeln:
-- Stütze dich auf die Treffer. "why" muss erkennbar auf einen Treffer zeigen, nicht auf Bauchgefühl. Wenn die Treffer wenig hergeben, sag das in "why" statt es zu erfinden.
-- "hook" ist der wörtliche erste Satz, gesprochen, maximal 12 Wörter. Er muss auch stumm funktionieren.
-- "format" ist eine Drehentscheidung, keine Stimmung. Also "Halbnah am Schreibtisch, Schnitt auf den Monitor, Hände im Bild" — nicht "dynamisch und modern".
-- "narration": on-camera, wenn die Person spricht und zu sehen ist. voiceover, wenn Bild und Stimme getrennt sind (dann kann die Stimme später synthetisch sein). mixed, wenn beides vorkommt.
-- Die Summe der "cuts"-Sekunden muss "totalSeconds" ergeben. Zwischen 15 und 40 Sekunden.
-- Übernimm die Tonalität und die Formulierungen der Marke. Benutze kein Wort aus der Verbotsliste.
-- Antworte auf Deutsch. JSON only.`;
+Rules:
+- Lean on the hits. "why" must visibly point at a hit, not at instinct. If the hits give you little, say so in "why" instead of inventing it.
+- "hook" is the literal first sentence, spoken, 12 words max. It has to work on mute too.
+- "format" is a shooting decision, not a mood. So "mid-shot at the desk, cut to the monitor, hands in frame" — not "dynamic and modern".
+- "narration": on-camera when the person speaks and is visible. voiceover when picture and voice are separate (the voice can be synthetic later). mixed when both occur.
+- The "cuts" seconds must add up to "totalSeconds". Between 15 and 40 seconds.
+- Carry over the brand's tone and its phrases. Use no word from the forbidden list.
+- Answer in English, even when the hits are in another language. JSON only.`;
 
 async function deriveAngles(
   genome: BrandGenome,
@@ -305,7 +305,7 @@ async function deriveAngles(
   if (res.incomplete_details) {
     throw new Error(`Antwort abgebrochen (${res.incomplete_details.reason})`);
   }
-  if (!res.output_text) throw new Error("Das Modell hat keinen Text zurückgegeben.");
+  if (!res.output_text) throw new Error("The model returned no text.");
 
   return (JSON.parse(res.output_text) as { angles: ContentAngle[] }).angles;
 }
@@ -316,7 +316,7 @@ function toContext(refs: ReelReference[], angles: ContentAngle[]): string {
 
   if (refs.length) {
     lines.push(
-      `Was im Themenfeld gerade läuft (Suchtreffer aus dem letzten Monat, als Beleg, nicht zum Abschreiben):`,
+      `What the niche is running right now (search hits from the last month, as evidence, not to copy):`,
       ...refs.slice(0, 8).map((r) => `- [${r.platform}] ${r.title}`),
     );
   }
@@ -324,8 +324,8 @@ function toContext(refs: ReelReference[], angles: ContentAngle[]): string {
   for (const a of angles) {
     lines.push(
       ``,
-      `Gewählter Winkel: ${a.angle}`,
-      `Begründung: ${a.why}`,
+      `Chosen angle: ${a.angle}`,
+      `Rationale: ${a.why}`,
       `Hook: "${a.hook}"`,
       `Format: ${a.format} · Sprechweise: ${a.narration} · ca. ${a.totalSeconds}s`,
       `Schnittfolge:`,

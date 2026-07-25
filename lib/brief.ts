@@ -42,21 +42,21 @@ const BRIEF_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SYSTEM = `Du bist Regisseur und Content-Strategin für Instagram Reels.
+const SYSTEM = `You are a director and content strategist for Instagram Reels.
 
-Du bekommst ein Thema und lieferst ein DREHBUCH, das eine einzelne Person mit einem
-Handy in unter 10 Minuten abdrehen kann. Keine Crew, kein Licht-Setup, kein Studio.
+You get a topic and deliver a SHOOTING SCRIPT one person can film on a phone in
+under 10 minutes. No crew, no lighting setup, no studio.
 
-Regeln:
-- Der Hook muss in den ersten 2 Sekunden funktionieren, auch ohne Ton.
-- "say" ist gesprochene Sprache, so wie man wirklich redet. Keine Stichpunkte,
-  keine Marketing-Floskeln, keine Wörter, die niemand laut sagt.
-- "camera" ist eine konkrete Anweisung: Bildausschnitt, Höhe, Bewegung, Abstand.
-  Beispiel: "Handy vertikal auf Brusthöhe, Arm ausgestreckt, du gehst dabei" —
-  nicht "dynamische Aufnahme".
-- Gesamtlänge zwischen 15 und 40 Sekunden. Summe der Shots muss dazu passen.
-- Sprich den Creator mit "du" an.
-- Antworte in der Sprache des Themas.`;
+Rules:
+- The hook has to land in the first 2 seconds, sound off.
+- "say" is spoken language, the way people actually talk. No bullet points, no
+  marketing filler, no words nobody says out loud.
+- "camera" is a concrete instruction: framing, height, movement, distance.
+  Example: "phone vertical at chest height, arm extended, walking as you talk" —
+  not "dynamic shot".
+- Total length between 15 and 40 seconds. The shots must add up to it.
+- Address the creator as "you".
+- Answer in English, whatever language the topic or the brand context is in.`;
 
 export type BriefInput = {
   topic: string;
@@ -103,10 +103,10 @@ export async function generateBrief(input: BriefInput): Promise<ShootBrief> {
   const client = new OpenAI();
 
   const parts = [`THEMA: ${input.topic}`];
-  if (input.targetSeconds) parts.push(`ZIELLÄNGE: ca. ${input.targetSeconds} Sekunden`);
+  if (input.targetSeconds) parts.push(`TARGET LENGTH: about ${input.targetSeconds} seconds`);
   if (input.context) {
     parts.push(
-      `ACCOUNT-KONTEXT (Tonalität daran ausrichten):\n${input.context.slice(0, 20_000)}`,
+      `ACCOUNT CONTEXT (match this voice):\n${input.context.slice(0, 20_000)}`,
     );
   }
 
@@ -129,10 +129,10 @@ export async function generateBrief(input: BriefInput): Promise<ShootBrief> {
 
   if (res.incomplete_details) {
     throw new Error(
-      `Antwort abgebrochen (${res.incomplete_details.reason}) — OPENAI_MODEL oder Token-Budget prüfen.`,
+      `Answer cut off (${res.incomplete_details.reason}) — check OPENAI_MODEL or the token budget.`,
     );
   }
-  if (!res.output_text) throw new Error("Das Modell hat keinen Text zurückgegeben.");
+  if (!res.output_text) throw new Error("The model returned no text.");
 
   return normalize(JSON.parse(res.output_text) as Record<string, unknown>, input.topic);
 }

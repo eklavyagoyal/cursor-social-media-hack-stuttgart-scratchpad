@@ -114,7 +114,8 @@ SUBSTANCE
 HOOKS
 - 3-5 opening-line patterns lifted from their strongest copy, generalised with {placeholders}. e.g. "Most {audience} think {belief}. They're wrong."
 
-Ground everything in the source. Answer in the language the source is written in. JSON only.`;
+Ground everything in the source. Write your analysis in English — but petPhrases stay
+in the source's original wording, because they are quotes. JSON only.`;
 
 async function scrapeVoiceSurface(url: string): Promise<string> {
   const fc = new Firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! });
@@ -162,21 +163,21 @@ async function scrapeVoiceSurface(url: string): Promise<string> {
 function toContext(g: Omit<BrandGenome, "context">): string {
   const { voice, substance } = g;
   return [
-    `Marke: ${g.name}${g.tagline ? ` — ${g.tagline}` : ""}`,
-    `Tonalität: ${voice.adjectives.join(", ")}`,
-    `Satzbau: ${voice.sentenceStyle}`,
+    `Brand: ${g.name}${g.tagline ? ` — ${g.tagline}` : ""}`,
+    `Voice: ${voice.adjectives.join(", ")}`,
+    `Sentence style: ${voice.sentenceStyle}`,
     `Emojis: ${voice.emojiPolicy}`,
-    `Zielperson: ${substance.icp}`,
+    `Target person: ${substance.icp}`,
     ``,
-    `Formulierungen, die die Marke wirklich benutzt — übernimm davon, wo es passt:`,
+    `Phrases the brand actually uses — reuse them where they fit:`,
     ...voice.petPhrases.map((p) => `- "${p}"`),
     ``,
-    voice.forbidden.length ? `Wörter, die NIE vorkommen dürfen: ${voice.forbidden.join(", ")}` : ``,
+    voice.forbidden.length ? `Words that must NEVER appear: ${voice.forbidden.join(", ")}` : ``,
     substance.proofPoints.length
-      ? `Belegbare Fakten, nichts dazuerfinden: ${substance.proofPoints.join(" · ")}`
+      ? `Verifiable facts, invent nothing beyond them: ${substance.proofPoints.join(" · ")}`
       : ``,
-    `Themenfelder: ${substance.pillars.join(" · ")}`,
-    g.hooks.length ? `\nBewährte Hook-Muster:\n${g.hooks.map((h) => `- ${h}`).join("\n")}` : ``,
+    `Content pillars: ${substance.pillars.join(" · ")}`,
+    g.hooks.length ? `\nProven hook patterns:\n${g.hooks.map((h) => `- ${h}`).join("\n")}` : ``,
   ]
     .filter(Boolean)
     .join("\n");

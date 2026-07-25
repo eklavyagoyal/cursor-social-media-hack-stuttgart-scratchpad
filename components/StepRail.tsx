@@ -35,11 +35,11 @@ export function StepRail({
   const done = steps.filter((s) => s.status === "done").length;
 
   return (
-    <nav aria-label="Durchlauf" className="flex flex-col gap-6">
+    <nav aria-label="Run" className="flex flex-col gap-6">
       <div>
-        <p className="eyebrow">Durchlauf</p>
+        <p className="eyebrow">Run</p>
         <p className="display mt-2 text-[19px]">
-          {done} <span className="text-muted">von {steps.length}</span>
+          {done} <span className="text-muted">of {steps.length}</span>
         </p>
         <div className="mt-3 h-[3px] w-full overflow-hidden rounded-full bg-surface-2">
           <div

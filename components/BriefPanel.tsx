@@ -50,7 +50,7 @@ function Grounded({ text, phrases }: { text: string; phrases?: string[] }) {
     out.push(
       <mark
         key={i}
-        title="Formulierung der Marke, wörtlich übernommen"
+        title="The brand's own phrase, carried over verbatim"
         className="rounded-sm bg-accent/18 px-0.5 text-accent decoration-accent/40 underline-offset-4"
       >
         {text.slice(m.start, m.end)}
@@ -76,13 +76,13 @@ export function BriefPanel({ brief, petPhrases }: { brief: ShootBrief; petPhrase
     <div className="space-y-6">
       {carried > 0 && (
         <p className="font-mono text-[11px] uppercase tracking-widest text-accent">
-          {carried} von {petPhrases?.length} Formulierungen der Marke wörtlich im Skript
+          {carried} of {petPhrases?.length} brand phrases carried verbatim into the script
         </p>
       )}
 
       <div>
         <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
-          Hook · erste 2 Sekunden
+          Hook · first 2 seconds
         </p>
         <p className="display mt-1.5 text-2xl leading-snug text-foreground">
           <Grounded text={brief.hook} phrases={petPhrases} />
@@ -100,7 +100,7 @@ export function BriefPanel({ brief, petPhrases }: { brief: ShootBrief; petPhrase
             </div>
 
             <p className="mt-2 text-[15px] leading-relaxed text-foreground">
-              „<Grounded text={shot.say} phrases={petPhrases} />“
+              “<Grounded text={shot.say} phrases={petPhrases} />”
             </p>
 
             <p className="mt-2 flex gap-2 text-[13px] leading-relaxed text-muted">
@@ -112,7 +112,7 @@ export function BriefPanel({ brief, petPhrases }: { brief: ShootBrief; petPhrase
 
             {shot.onScreen && (
               <p className="mt-2 inline-block rounded-md bg-foreground/8 px-2 py-1 font-mono text-[11px] text-foreground/80">
-                Einblendung: {shot.onScreen}
+                On screen: {shot.onScreen}
               </p>
             )}
           </li>
@@ -133,10 +133,10 @@ export function BriefPanel({ brief, petPhrases }: { brief: ShootBrief; petPhrase
           <Field label="Call to action">
             <p className="text-[14px]">{brief.cta}</p>
           </Field>
-          <Field label="Ton">
+          <Field label="Sound">
             <p className="text-[14px]">{brief.soundIdea}</p>
           </Field>
-          <Field label="Beste Postingzeit">
+          <Field label="Best post time">
             <p className="font-mono text-[13px]">{brief.bestPostTime}</p>
           </Field>
         </div>

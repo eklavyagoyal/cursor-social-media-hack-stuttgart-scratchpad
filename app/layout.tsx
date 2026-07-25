@@ -28,15 +28,15 @@ const jbmono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Vorgabe → Dreh → Post",
+  title: "Brief → Shoot → Post",
   description:
-    "Ein Link, ein Thema, 30 Sekunden Handyvideo — fertig geschnittener Reel mit Untertiteln.",
+    "One link, one topic, 30 seconds of phone video — a finished, captioned reel.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="de"
+      lang="en"
       className={`${archivo.variable} ${jbmono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">{children}</body>

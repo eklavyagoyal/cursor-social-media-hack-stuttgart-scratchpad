@@ -25,14 +25,14 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const file = form.get("video");
     if (!(file instanceof File) || file.size === 0) {
-      return NextResponse.json({ error: "Kein Video im Upload gefunden." }, { status: 400 });
+      return NextResponse.json({ error: "No video found in the upload." }, { status: 400 });
     }
     if (file.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json(
         {
           error:
-            `Video ist ${(file.size / 1e6).toFixed(0)} MB, erlaubt sind ${MAX_UPLOAD_BYTES / 1e6} MB. ` +
-            `Für ein Reel reichen 20-40 Sekunden.`,
+            `Video is ${(file.size / 1e6).toFixed(0)} MB, the limit is ${MAX_UPLOAD_BYTES / 1e6} MB. ` +
+            `20-40 seconds is plenty for a reel.`,
         },
         { status: 413 },
       );

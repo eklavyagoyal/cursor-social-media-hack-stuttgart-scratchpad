@@ -53,7 +53,7 @@ export function MarketPanel({
                 </div>
 
                 <p className="mt-3 font-serif text-[19px] leading-snug text-foreground">
-                  „{a.hook}“
+                  “{a.hook}”
                 </p>
 
                 <p className="mt-3 text-[13px] leading-relaxed text-muted">{a.why}</p>
@@ -75,7 +75,7 @@ export function MarketPanel({
                 </ol>
 
                 <p className="mt-4 font-mono text-[11px] text-accent">
-                  {active ? "als Thema übernommen" : "diesen Winkel nehmen"}
+                  {active ? "taken as the topic" : "take this angle"}
                 </p>
               </button>
             );
@@ -92,7 +92,7 @@ export function MarketPanel({
       {references.length > 0 && (
         <div>
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
-            {references.length} Fundstellen · letzter Monat
+            {references.length} findings · last month
           </p>
           <ul className="mt-3 space-y-1.5">
             {references.map((r) => (

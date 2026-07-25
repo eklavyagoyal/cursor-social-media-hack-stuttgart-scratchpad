@@ -24,12 +24,12 @@ const rail = (phase: Phase, reachable: boolean): StepStatus =>
 /** SDK errors are written for whoever wrote the SDK. Nobody on stage should read one. */
 function humanError(msg: string): string {
   if (/authentication|api[- _]?key|unauthor/i.test(msg)) {
-    return "Kein gültiger API-Schlüssel konfiguriert — siehe .env.local.";
+    return "No valid API key configured — check .env.local.";
   }
   if (/fetch failed|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|network/i.test(msg)) {
-    return "Keine Verbindung zum Dienst — Netz weg?";
+    return "Can't reach the service — network down?";
   }
-  if (/rate.?limit|429/i.test(msg)) return "Rate-Limit erreicht. Kurz warten.";
+  if (/rate.?limit|429/i.test(msg)) return "Rate limit hit. Give it a moment.";
   return msg;
 }
 
@@ -85,8 +85,8 @@ export default function Home() {
     setGenome(g);
     setBrandPhase("done");
     brandTrace.finish(
-      `Stimme: ${g.voice.adjectives.join(" · ")}`,
-      `${g.voice.petPhrases.length} Formulierungen wörtlich übernommen`,
+      `Voice: ${g.voice.adjectives.join(" · ")}`,
+      `${g.voice.petPhrases.length} phrases lifted verbatim`,
       `Palette: ${g.look.palette.slice(0, 3).join("  ")}`,
     );
     // The second crawl follows straight on: knowing how they sound is only half
@@ -99,10 +99,10 @@ export default function Home() {
     setResearch(null);
     setAngle(undefined);
     researchTrace.start([
-      { after: 0, kind: "step", msg: "Suchanfragen aus dem Marken-Profil ableiten" },
-      { after: 1800, kind: "step", msg: "Kurzvideos im Themenfeld suchen · letzter Monat" },
-      { after: 5000, kind: "ok", msg: "Instagram · TikTok · YouTube durchsucht" },
-      { after: 6500, kind: "step", msg: "Winkel, Hook und Schnittfolge ableiten" },
+      { after: 0, kind: "step", msg: "Deriving search queries from the brand profile" },
+      { after: 1800, kind: "step", msg: "Searching short video in the niche · last month" },
+      { after: 5000, kind: "ok", msg: "Instagram · TikTok · YouTube searched" },
+      { after: 6500, kind: "step", msg: "Deriving angles, hooks and cut order" },
     ]);
     try {
       const res = await fetch("/api/research", {
@@ -111,13 +111,13 @@ export default function Home() {
         body: JSON.stringify({ genome: g }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Marktrecherche fehlgeschlagen.");
+      if (!res.ok) throw new Error(json.error ?? "Market scan failed.");
       const r = json.research as MarketResearch;
       setResearch(r);
       setResearchPhase("done");
       researchTrace.finish(
-        `${r.queries.length} Suchanfragen · ${r.references.length} Fundstellen`,
-        ...(r.angles.length ? [`${r.angles.length} Winkel mit Schnittfolge`] : []),
+        `${r.queries.length} queries · ${r.references.length} findings`,
+        ...(r.angles.length ? [`${r.angles.length} angles with a cut order`] : []),
       );
       if (r.degraded) researchTrace.warn(r.degraded);
     } catch (e) {
@@ -134,7 +134,7 @@ export default function Home() {
 
   async function cachedGenome(): Promise<BrandGenome> {
     const res = await fetch("/demo/genome.json");
-    if (!res.ok) throw new Error("Kein gespeichertes Marken-Profil vorhanden.");
+    if (!res.ok) throw new Error("No cached brand profile available.");
     return (await res.json()) as BrandGenome;
   }
 
@@ -171,7 +171,7 @@ export default function Home() {
       setProcessPhase("done");
       processTrace.reset();
     } catch {
-      setError("Kein Demo-Pfad vorhanden. Einmal `npm run seed:demo` laufen lassen.");
+      setError("No cached run available. Run `npm run seed:demo` once.");
     }
   }
 
@@ -181,12 +181,12 @@ export default function Home() {
     setError(null);
     setNotice(null);
     brandTrace.start([
-      { after: 0, kind: "step", msg: "Marken-Oberfläche lesen" },
-      { after: 1400, kind: "ok", msg: "Startseite gelesen" },
-      { after: 3200, kind: "ok", msg: "Unterseiten mit Tonalität gefunden" },
-      { after: 4600, kind: "step", msg: "Tonalität extrahieren" },
-      { after: 9000, kind: "step", msg: "Formulierungen wörtlich sammeln" },
-      { after: 16000, kind: "step", msg: "Hook-Muster ableiten" },
+      { after: 0, kind: "step", msg: "Reading the brand's surface" },
+      { after: 1400, kind: "ok", msg: "Home page read" },
+      { after: 3200, kind: "ok", msg: "Found subpages carrying the voice" },
+      { after: 4600, kind: "step", msg: "Extracting tone of voice" },
+      { after: 9000, kind: "step", msg: "Collecting phrases verbatim" },
+      { after: 16000, kind: "step", msg: "Deriving hook patterns" },
     ]);
 
     try {
@@ -200,17 +200,17 @@ export default function Home() {
       if (!res.ok) {
         // 422 + thin: a JS-only or blocking site. Expected, not a crash.
         if (json.thin) {
-          brandTrace.warn("Seite liefert kaum lesbaren Text — gespeichertes Profil geladen");
+          brandTrace.warn("Page returns almost no readable text — loaded the cached profile");
           const g = await cachedGenome();
           setNotice(
-            "Die Seite rendert erst im Browser, da kommt beim Lesen fast nichts an. Wir arbeiten mit dem gespeicherten Marken-Profil weiter.",
+            "That site only renders in the browser, so there's almost nothing to read server-side. Carrying on with the cached brand profile.",
           );
           // No auto-research on the fallback: if the crawl just failed, firing a
           // second one at the same network is the wrong reflex. There's a button.
           applyGenome(g, { thenResearch: false });
           return;
         }
-        throw new Error(json.error ?? "Marke lesen fehlgeschlagen.");
+        throw new Error(json.error ?? "Reading the brand failed.");
       }
 
       applyGenome(json.genome as BrandGenome);
@@ -227,7 +227,7 @@ export default function Home() {
     try {
       const g = await cachedGenome();
       setError(null);
-      setNotice("Gespeichertes Marken-Profil geladen — nicht von dieser URL gelesen.");
+      setNotice("Loaded the cached brand profile — not read from this URL.");
       applyGenome(g, { thenResearch: false });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -239,22 +239,22 @@ export default function Home() {
     setBriefPhase("running");
     setError(null);
     briefTrace.start([
-      { after: 0, kind: "step", msg: "Thema schärfen" },
+      { after: 0, kind: "step", msg: "Sharpening the topic" },
       ...(genome
-        ? ([{ after: 900, kind: "ok", msg: `Grundierung: ${genome.name}` }] as const)
+        ? ([{ after: 900, kind: "ok", msg: `Grounded in: ${genome.name}` }] as const)
         : []),
       ...(research?.references.length
         ? ([
             {
               after: 1300,
               kind: "ok",
-              msg: `${research.references.length} Fundstellen aus dem Themenfeld im Kontext`,
+              msg: `${research.references.length} findings from the niche in context`,
             },
           ] as const)
         : []),
-      { after: 2000, kind: "step", msg: "Hook schreiben" },
-      { after: 5000, kind: "step", msg: "Shots und Kameraführung" },
-      { after: 9000, kind: "step", msg: "Caption und Hashtags" },
+      { after: 2000, kind: "step", msg: "Writing the hook" },
+      { after: 5000, kind: "step", msg: "Shots and camera direction" },
+      { after: 9000, kind: "step", msg: "Caption and hashtags" },
     ]);
     try {
       // Both blocks verbatim: lib/brand.ts renders how they sound, lib/research.ts
@@ -268,14 +268,14 @@ export default function Home() {
         body: JSON.stringify({ topic, context }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Briefing fehlgeschlagen.");
+      if (!res.ok) throw new Error(json.error ?? "Building the brief failed.");
       const b = json.brief as ShootBrief;
       setBrief(b);
       setCaption(`${b.caption}\n\n${b.hashtags.join(" ")}`);
       setBriefPhase("done");
       briefTrace.finish(
-        `${b.shots.length} Shots · ${b.totalSeconds}s`,
-        `Caption + ${b.hashtags.length} Hashtags`,
+        `${b.shots.length} shots · ${b.totalSeconds}s`,
+        `Caption + ${b.hashtags.length} hashtags`,
       );
     } catch (e) {
       const msg = humanError(e instanceof Error ? e.message : String(e));
@@ -292,11 +292,11 @@ export default function Home() {
     setPublishResults([]);
     processTrace.start([
       { after: 0, kind: "ok", msg: `${file.name} · ${mb(file.size)}` },
-      { after: 600, kind: "step", msg: "Ton extrahieren" },
-      { after: 3000, kind: "step", msg: "transkribieren, mit Wort-Timings" },
-      { after: 12000, kind: "step", msg: "Stille und Füllwörter suchen" },
-      { after: 18000, kind: "step", msg: "Untertitel gruppieren" },
-      { after: 24000, kind: "step", msg: "mp4 rendern, Untertitel einbrennen" },
+      { after: 600, kind: "step", msg: "Extracting audio" },
+      { after: 3000, kind: "step", msg: "Transcribing, with word timings" },
+      { after: 12000, kind: "step", msg: "Finding silence and filler words" },
+      { after: 18000, kind: "step", msg: "Grouping captions" },
+      { after: 24000, kind: "step", msg: "Rendering mp4, burning in captions" },
     ]);
     try {
       const form = new FormData();
@@ -305,13 +305,13 @@ export default function Home() {
 
       const res = await fetch("/api/process", { method: "POST", body: form });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Verarbeitung fehlgeschlagen.");
+      if (!res.ok) throw new Error(json.error ?? "Processing failed.");
       const r = json as ProcessResult;
       setResult(r);
       setProcessPhase("done");
       processTrace.finish(
-        `${r.plan.removedSeconds.toFixed(1)}s raus · ${r.plan.outDuration.toFixed(1)}s Endlänge`,
-        `${r.captions.length} Untertitel-Gruppen`,
+        `${r.plan.removedSeconds.toFixed(1)}s cut · ${r.plan.outDuration.toFixed(1)}s final length`,
+        `${r.captions.length} caption groups`,
         `mp4 ${r.render.width}×${r.render.height} · ${mb(r.render.sizeBytes)}`,
       );
     } catch (e) {
@@ -336,7 +336,7 @@ export default function Home() {
         body: JSON.stringify({ slug: result.slug, caption }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Posten fehlgeschlagen.");
+      if (!res.ok) throw new Error(json.error ?? "Publishing failed.");
       setPublishResults(json.results ?? []);
       setPublicUrl(json.publicUrl);
       setPublishPhase("done");
@@ -352,37 +352,37 @@ export default function Home() {
     {
       id: "brand",
       n: 1,
-      title: "Marke",
+      title: "Brand",
       status: brandSkipped && !genome ? "done" : brandPhase,
       lines: brandTrace.lines,
       summary: genome
         ? `${genome.name} · ${genome.voice.adjectives.slice(0, 2).join(" · ")}`
         : brandSkipped
-          ? "übersprungen"
+          ? "skipped"
           : undefined,
     },
     {
       id: "market",
       n: 2,
-      title: "Markt",
+      title: "Market",
       status: rail(researchPhase, Boolean(genome)),
       lines: researchTrace.lines,
       summary: research
-        ? `${research.references.length} Fundstellen · ${research.angles.length} Winkel`
+        ? `${research.references.length} findings · ${research.angles.length} angles`
         : undefined,
     },
     {
       id: "brief",
       n: 3,
-      title: "Vorgabe",
+      title: "Brief",
       status: rail(briefPhase, briefUnlocked),
       lines: briefTrace.lines,
-      summary: brief ? `${brief.shots.length} Shots · ${brief.totalSeconds}s` : undefined,
+      summary: brief ? `${brief.shots.length} shots · ${brief.totalSeconds}s` : undefined,
     },
     {
       id: "shoot",
       n: 4,
-      title: "Dreh & Upload",
+      title: "Shoot & upload",
       status: rail(processPhase, briefUnlocked),
       lines: processTrace.lines,
       summary: result ? `${mb(result.render.sizeBytes)} · ${result.render.height}p` : undefined,
@@ -390,18 +390,18 @@ export default function Home() {
     {
       id: "cut",
       n: 5,
-      title: "Schnitt & Untertitel",
+      title: "Cut & captions",
       status: rail(result ? "done" : "idle", briefUnlocked),
       summary: result
-        ? `${result.plan.removedSeconds.toFixed(1)}s raus · ${result.captions.length} Gruppen`
+        ? `${result.plan.removedSeconds.toFixed(1)}s cut · ${result.captions.length} groups`
         : undefined,
     },
     {
       id: "post",
       n: 6,
-      title: "Posten",
+      title: "Publish",
       status: rail(publishPhase, Boolean(result)),
-      summary: publishResults.length ? `${posted}/${publishResults.length} gepostet` : undefined,
+      summary: publishResults.length ? `${posted}/${publishResults.length} posted` : undefined,
     },
   ];
 
@@ -426,7 +426,7 @@ export default function Home() {
           <div>
             <p className="display text-[17px]">Legacy Creator</p>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
-              Vorgabe → Dreh → Post
+              Brief → Shoot → Post
             </p>
           </div>
 
@@ -437,7 +437,7 @@ export default function Home() {
             onClick={loadDemo}
             className="mt-auto shrink-0 self-start font-mono text-[10.5px] text-muted underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground"
           >
-            gespeicherten Demo-Durchlauf laden
+            load the cached demo run
           </button>
         </div>
       </aside>
@@ -445,15 +445,14 @@ export default function Home() {
       <main className="min-w-0 flex-1">
         <header className="border-b border-border pb-9">
           <h1 className="display max-w-3xl text-[34px] sm:text-[44px]">
-            Du filmst 30 Sekunden.
+            You film 30 seconds.
             <br />
-            <span className="text-muted">Den Rest macht die Maschine.</span>
+            <span className="text-muted">The machine does the rest.</span>
           </h1>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
-            Ein Link genügt: wir lesen, wie deine Marke wirklich klingt. Daraus wird ein Drehbuch
-            mit Kameraanweisungen. Film es mit dem Handy, lad es hoch — Stillen und Füllwörter
-            fliegen raus, Untertitel werden eingebrannt, und der Reel geht auf den
-            Business-Account.
+            One link is enough: we read how your brand actually sounds, and turn it into a script
+            with camera direction. Shoot it on your phone and upload — silences and filler words
+            come out, captions get burned in, and the reel goes to the business account.
           </p>
         </header>
 
@@ -466,8 +465,8 @@ export default function Home() {
         <Step
           id="brand"
           n={1}
-          title="Marke"
-          hint="Eine URL. Wir lesen die Seite und ziehen raus, wie ihr klingt — Tonalität, eigene Formulierungen, Farben."
+          title="Brand"
+          hint="One URL. We read the site and pull out how you sound — tone of voice, your own phrases, your colours."
         >
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
@@ -484,7 +483,7 @@ export default function Home() {
               disabled={brandPhase === "running" || !url.trim()}
               className="rounded-lg bg-accent px-6 py-3 text-[15px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {brandPhase === "running" ? "liest…" : "Marke lesen"}
+              {brandPhase === "running" ? "reading…" : "Read the brand"}
             </button>
           </div>
 
@@ -496,7 +495,7 @@ export default function Home() {
                   onClick={() => setBrandSkipped(true)}
                   className="font-mono text-[11px] text-muted underline decoration-dotted underline-offset-4 hover:text-foreground"
                 >
-                  überspringen, nur mit einem Thema arbeiten
+                  skip this, just work from a topic
                 </button>
               )}
               {brandPhase === "error" && (
@@ -505,7 +504,7 @@ export default function Home() {
                   onClick={useCachedGenome}
                   className="font-mono text-[11px] text-accent underline decoration-dotted underline-offset-4 hover:text-foreground"
                 >
-                  gespeichertes Marken-Profil verwenden
+                  use the cached brand profile
                 </button>
               )}
             </div>
@@ -528,8 +527,8 @@ export default function Home() {
           <Step
             id="market"
             n={2}
-            title="Markt"
-            hint="Zweiter Crawl: was im Themenfeld gerade wirklich gepostet wird — und was das für Format, Schnittfolge und Länge heißt."
+            title="Market"
+            hint="A second crawl: what the niche is actually posting right now — and what that means for format, cut order and length."
           >
             {researchPhase !== "running" && (
               <button
@@ -537,7 +536,7 @@ export default function Home() {
                 onClick={() => genome && runResearch(genome)}
                 className="rounded-lg border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60"
               >
-                {research ? "Neu scannen" : "Themenfeld scannen"}
+                {research ? "Scan again" : "Scan the niche"}
               </button>
             )}
 
@@ -554,13 +553,13 @@ export default function Home() {
             <Step
               id="brief"
               n={3}
-              title="Vorgabe"
+              title="Brief"
               hint={
                 genome
-                  ? `Was soll rein? Das Drehbuch entsteht in der Tonalität von ${genome.name}${
-                      research?.references.length ? " und mit dem, was im Themenfeld läuft" : ""
+                  ? `What's it about? The script gets written in ${genome.name}'s voice${
+                      research?.references.length ? ", against what the niche is running" : ""
                     }.`
-                  : "Was soll rein? Daraus wird ein Drehbuch."
+                  : "What's it about? That becomes a script."
               }
             >
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -568,7 +567,7 @@ export default function Home() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && makeBrief()}
-                  placeholder="z.B. Warum unsere Espressomischung dreimal geröstet wird"
+                  placeholder="e.g. Why our espresso blend gets roasted three times"
                   className="max-w-xl flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-[15px] outline-none transition-colors placeholder:text-muted/70 focus:border-accent/60"
                 />
                 <button
@@ -577,7 +576,7 @@ export default function Home() {
                   disabled={briefPhase === "running" || !topic.trim()}
                   className="rounded-lg bg-accent px-6 py-3 text-[15px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
                 >
-                  {briefPhase === "running" ? "denkt nach…" : "Drehbuch bauen"}
+                  {briefPhase === "running" ? "thinking…" : "Build the script"}
                 </button>
               </div>
 
@@ -591,8 +590,8 @@ export default function Home() {
             <Step
               id="shoot"
               n={4}
-              title="Dreh & Upload"
-              hint="Handy, vertikal, einmal durchsprechen. Fehler sind egal — die schneidet er raus."
+              title="Shoot & upload"
+              hint="Phone, vertical, one take. Mistakes don't matter — they get cut out."
             >
               <label className="flex cursor-pointer items-center gap-3 font-mono text-[12px] text-muted">
                 <input
@@ -601,8 +600,7 @@ export default function Home() {
                   onChange={(e) => setAggressive(e.target.checked)}
                   className="h-4 w-4 accent-[var(--color-accent)]"
                 />
-                Auch Diskursfüller schneiden („also“, „quasi“, „irgendwie“) — schärfer, aber
-                riskanter
+                Also cut discourse fillers (“like”, “basically”, “you know”) — tighter, but riskier
               </label>
 
               <div className="mt-4 flex flex-wrap items-center gap-4">
@@ -622,12 +620,12 @@ export default function Home() {
                   disabled={processPhase === "running"}
                   className="rounded-lg border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60 disabled:opacity-40"
                 >
-                  {processPhase === "running" ? "verarbeitet…" : "Rohvideo auswählen"}
+                  {processPhase === "running" ? "processing…" : "Choose raw video"}
                 </button>
 
                 {processPhase === "running" && (
                   <p className="font-mono text-[12px] text-muted">
-                    Dauert etwa so lang wie der Clip — der Fortschritt läuft links mit.
+                    Takes about as long as the clip — progress runs on the left.
                   </p>
                 )}
               </div>
@@ -636,11 +634,11 @@ export default function Home() {
             <Step
               id="cut"
               n={5}
-              title="Schnitt & Untertitel"
-              hint="Vorschau läuft ohne Rendern — das mp4 liegt daneben."
+              title="Cut & captions"
+              hint="The preview runs without rendering — the mp4 sits next to it."
             >
               {!result ? (
-                <p className="font-mono text-[12px] text-muted">Noch kein Clip verarbeitet.</p>
+                <p className="font-mono text-[12px] text-muted">No clip processed yet.</p>
               ) : (
                 <div className="grid gap-8 xl:grid-cols-[320px_1fr]">
                   <ReelPreview
@@ -654,19 +652,19 @@ export default function Home() {
 
                     <div className="grid grid-cols-2 gap-3 font-mono text-[11px] sm:grid-cols-4">
                       <Stat
-                        label="Quelle"
+                        label="Source"
                         value={`${result.source.width}×${result.source.height}`}
                       />
                       <Stat
                         label="Export"
                         value={`${result.render.width}×${result.render.height}`}
                       />
-                      <Stat label="Untertitel" value={`${result.captions.length} Gruppen`} />
-                      <Stat label="Dateigröße" value={mb(result.render.sizeBytes)} />
+                      <Stat label="Captions" value={`${result.captions.length} groups`} />
+                      <Stat label="File size" value={mb(result.render.sizeBytes)} />
                     </div>
 
                     <div>
-                      <p className="eyebrow">Transkript · {result.transcript.languageCode}</p>
+                      <p className="eyebrow">Transcript · {result.transcript.languageCode}</p>
                       <p className="mt-2 max-h-28 overflow-y-auto text-[14px] leading-relaxed text-foreground/80">
                         {result.transcript.text || "—"}
                       </p>
@@ -678,7 +676,7 @@ export default function Home() {
                       rel="noreferrer"
                       className="inline-block font-mono text-[12px] text-foreground underline decoration-dotted underline-offset-4 hover:text-accent"
                     >
-                      gerendertes mp4 öffnen ↗
+                      open the rendered mp4 ↗
                     </a>
                   </div>
                 </div>
@@ -688,14 +686,14 @@ export default function Home() {
             <Step
               id="post"
               n={6}
-              title="Posten"
-              hint="Instagram holt die Datei selbst ab, deshalb geht sie vorher öffentlich online."
+              title="Publish"
+              hint="Instagram fetches the file itself, so it goes public before the post."
             >
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 rows={4}
-                placeholder="Caption — erste Zeile muss vor dem „mehr“ funktionieren."
+                placeholder="Caption — the first line has to work before the “more”."
                 className="w-full max-w-3xl resize-y rounded-lg border border-border bg-surface px-4 py-3 text-[14px] leading-relaxed outline-none transition-colors placeholder:text-muted/70 focus:border-accent/60"
               />
 
@@ -704,7 +702,7 @@ export default function Home() {
                   ref={attachSecretInput}
                   type="password"
                   onChange={(e) => sessionStorage.setItem("publishSecret", e.target.value)}
-                  placeholder="Operator-Freigabe"
+                  placeholder="Operator approval"
                   autoComplete="off"
                   className="w-52 rounded-lg border border-border bg-surface px-4 py-3 font-mono text-[13px] outline-none transition-colors placeholder:text-muted/70 focus:border-accent/60"
                 />
@@ -714,13 +712,13 @@ export default function Home() {
                   disabled={!result || publishPhase === "running"}
                   className="rounded-lg bg-live px-6 py-3 text-[15px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
                 >
-                  {publishPhase === "running" ? "lädt hoch…" : "Auf Instagram posten"}
+                  {publishPhase === "running" ? "uploading…" : "Post to Instagram"}
                 </button>
               </div>
 
               <p className="mt-3 max-w-xl font-mono text-[11px] leading-relaxed text-muted">
-                Zwei Schlösser, weil die Caption vom Client kommt und auf einem echten Account
-                landet: PUBLISH_ENABLED und PUBLISH_SECRET, beide in .env.local.
+                Two locks, because the caption comes from the client and lands on a real account:
+                PUBLISH_ENABLED and PUBLISH_SECRET, both in .env.local.
               </p>
 
               {publishResults.length > 0 && (
@@ -751,7 +749,7 @@ function Step({
 }) {
   return (
     <section id={`step-${id}`} className="scroll-mt-8 border-b border-border py-9">
-      <p className="eyebrow">Schritt {String(n).padStart(2, "0")}</p>
+      <p className="eyebrow">Step {String(n).padStart(2, "0")}</p>
       <h2 className="display mt-2 text-[26px]">{title}</h2>
       <p className="mt-2 mb-6 max-w-2xl text-[14px] leading-relaxed text-muted">{hint}</p>
       {children}

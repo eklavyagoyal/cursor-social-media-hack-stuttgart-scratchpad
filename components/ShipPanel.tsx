@@ -8,10 +8,10 @@ const TARGET_LABEL: Record<string, string> = {
 };
 
 const STATUS: Record<PublishResult["status"], { dot: string; text: string; label: string }> = {
-  posted: { dot: "bg-live", text: "text-live", label: "gepostet" },
-  queued: { dot: "bg-accent", text: "text-accent", label: "in der Warteschlange" },
-  skipped: { dot: "bg-muted", text: "text-muted", label: "übersprungen" },
-  error: { dot: "bg-red-400", text: "text-red-400", label: "Fehler" },
+  posted: { dot: "bg-live", text: "text-live", label: "posted" },
+  queued: { dot: "bg-accent", text: "text-accent", label: "queued" },
+  skipped: { dot: "bg-muted", text: "text-muted", label: "skipped" },
+  error: { dot: "bg-red-400", text: "text-red-400", label: "error" },
 };
 
 export function ShipPanel({
@@ -44,7 +44,7 @@ export function ShipPanel({
                   rel="noreferrer"
                   className="font-mono text-[12px] text-foreground underline decoration-dotted underline-offset-4 hover:text-accent"
                 >
-                  ansehen ↗
+                  view ↗
                 </a>
               )}
 
@@ -60,7 +60,7 @@ export function ShipPanel({
 
       {publicUrl && (
         <p className="font-mono text-[11px] leading-relaxed text-muted">
-          Öffentliche Datei, die Instagram abgeholt hat:{" "}
+          Public file Instagram fetched:{" "}
           <a
             href={publicUrl}
             target="_blank"

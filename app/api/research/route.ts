@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     if (!genome?.substance?.pillars?.length) {
       return NextResponse.json(
-        { error: "Kein Marken-Profil übergeben — erst /api/brand." },
+        { error: "No brand profile passed — call /api/brand first." },
         { status: 400 },
       );
     }

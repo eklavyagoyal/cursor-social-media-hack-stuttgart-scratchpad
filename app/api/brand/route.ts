@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     try {
       parsed = new URL(url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`);
     } catch {
-      return NextResponse.json({ error: "Keine gültige URL." }, { status: 400 });
+      return NextResponse.json({ error: "Not a valid URL." }, { status: 400 });
     }
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
       return NextResponse.json({ error: `Schema ${parsed.protocol} nicht erlaubt.` }, { status: 400 });
