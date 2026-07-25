@@ -12,7 +12,7 @@ difference matters if you are judging whether the thing works.
 | [`shoot-brief.md`](shoot-brief.md) | The shot list a creator films from | Fixture in `lib/fixtures.ts`, matching the `ShootBrief` contract. Regenerate live with `POST /api/brief` |
 | [`brand-genome.md`](brand-genome.md) | Voice, verbatim phrases, palette and grounding block read off a brand's website | Grounded in the real copy at [legacy-ai.de](https://legacy-ai.de), assembled by hand. Regenerate live with `POST /api/brand` |
 
-Both fixtures exist because `ANTHROPIC_API_KEY` was not configured on the machine that
+Both fixtures exist because `OPENAI_API_KEY` was not configured on the machine that
 produced this cache. They match the contracts in `lib/types.ts` and `lib/brand.ts` field
 for field — `npx tsx scripts/smoke.mts` asserts exactly that — so the UI and the live
 routes cannot tell them apart. Nothing in them is invented: the brand genome quotes only

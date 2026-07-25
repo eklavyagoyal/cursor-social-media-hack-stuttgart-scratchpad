@@ -17,7 +17,7 @@ in your own phrases instead of generic Reel-speak.
 
 ```
   URL ──▶ brand genome ──▶ topic ──▶ shoot brief ──▶ [ you film it ] ──▶ upload
-       Firecrawl + Claude                  Claude                            │
+       Firecrawl + GPT-5.6                GPT-5.6                           │
                                                                              ▼
   Instagram ◀── publish ◀── mp4 ◀── burn captions ◀── cut ◀── transcribe ◀────┘
     Graph API              ffmpeg    @napi-rs/canvas   lib/cut  ElevenLabs Scribe
@@ -38,7 +38,7 @@ Precise, because a vague limitations section is worth less than an honest one.
 | **Caption grouping + re-timing onto the output timeline** | Real, same command |
 | **Vertical render, 1080×1920, captions burned in** | Real, same command. This ffmpeg build has no libass, so captions are drawn as PNGs with `@napi-rs/canvas` and composited |
 | **Transcription** | Real, needs `ELEVENLABS_API_KEY`. Called over REST, not the SDK, which mangles the `words` field |
-| **Brand genome + shoot brief** | Real, need `FIRECRAWL_API_KEY` + `ANTHROPIC_API_KEY`. Without them the UI falls back to the cached profile and says so on screen |
+| **Brand genome + shoot brief** | Real, need `FIRECRAWL_API_KEY` + `OPENAI_API_KEY`. Without them the UI falls back to the cached profile and says so on screen |
 | **Instagram publishing** | Implemented against the Graph API v23. Needs an Instagram **Business** account, a token, and the file behind a public HTTPS URL — Instagram fetches the video itself, so localhost cannot work. Gated behind `PUBLISH_ENABLED` **and** an operator secret |
 | **Telegram publishing** | Real, needs a bot token. Used as the proof channel that never waits on a platform review |
 | **The cached demo path** | Real files, committed: `public/demo/`. Runs with no keys and no network |
@@ -102,8 +102,8 @@ One file per job. No framework beyond Next.js.
 | File | What it does |
 |---|---|
 | `lib/types.ts` | The contracts. `ShootBrief`, `Transcript`, `CutPlan`, `CaptionGroup`, `ProcessResult` |
-| `lib/brand.ts` | One URL → `BrandGenome`. Firecrawl scrapes the voice-carrying pages, Claude reverse-engineers voice, palette and verbatim phrases |
-| `lib/brief.ts` | Topic + brand context → `ShootBrief` via Claude |
+| `lib/brand.ts` | One URL → `BrandGenome`. Firecrawl scrapes the voice-carrying pages, GPT-5.6 reverse-engineers voice, palette and verbatim phrases |
+| `lib/brief.ts` | Topic + brand context → `ShootBrief` via GPT-5.6 |
 | `lib/transcribe.ts` | Audio → transcript with per-word start/end times (ElevenLabs Scribe) |
 | `lib/cut.ts` | Word timings → cut plan. Hesitations always go; discourse fillers are opt-in because they can be load-bearing. Also groups captions and maps them onto the output timeline |
 | `lib/caption-image.ts` | Draws each caption group as a transparent PNG |
