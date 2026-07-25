@@ -24,6 +24,7 @@ export function ShootBreakdown({
   const sourceSeconds = clips.reduce((sum, c) => sum + c.plan.sourceDuration, 0);
   const removed = clips.reduce((sum, c) => sum + c.plan.removedSeconds, 0);
   const captions = clips.reduce((sum, c) => sum + c.captions.length, 0);
+  const spoken = clips.filter((c) => c.mode === "voice").length;
 
   return (
     <div className="grid gap-8 xl:grid-cols-[320px_1fr]">
@@ -52,6 +53,7 @@ export function ShootBreakdown({
         <div>
           <p className="eyebrow">
             Per take · {captions} caption groups total
+            {spoken > 0 ? ` · ${spoken} spoken by a voice` : ""}
           </p>
           <ol className="mt-4 space-y-5">
             {clips.map((clip) => (
@@ -72,9 +74,21 @@ export function ShootBreakdown({
                     this take alone ↗
                   </a>
                 </div>
-                <div className="mt-2">
-                  <CutTimeline plan={clip.plan} />
-                </div>
+                {/* A spoken take has nothing to cut, so a cut timeline would be a
+                    full green bar saying nothing. What matters instead is which
+                    voice said what, and how long the line ran. */}
+                {clip.mode === "voice" ? (
+                  <p className="mt-2 font-mono text-[11px] text-muted">
+                    <span className="text-accent">{clip.voice?.name ?? "voice"}</span> spoke this
+                    line · {clip.render.duration.toFixed(1)}s · captions from the voice's own
+                    timestamps · {clip.source.duration.toFixed(1)}s of footage
+                    {clip.source.duration < clip.render.duration ? " looped to fit" : " trimmed to fit"}
+                  </p>
+                ) : (
+                  <div className="mt-2">
+                    <CutTimeline plan={clip.plan} />
+                  </div>
+                )}
                 {clip.transcript.text && (
                   <p className="mt-2 max-h-16 overflow-y-auto text-[13px] leading-relaxed text-foreground/70">
                     {clip.transcript.text}

@@ -97,6 +97,7 @@ const result: ProcessResult = {
   clips: [
     {
       index: 0,
+      mode: "original",
       slug: SLUG,
       source,
       rawUrl: `/demo/${SLUG}-raw${ext}`,

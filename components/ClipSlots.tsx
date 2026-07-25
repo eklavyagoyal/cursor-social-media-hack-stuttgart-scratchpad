@@ -1,6 +1,7 @@
 "use client";
 
-import type { Shot } from "@/lib/types";
+import type { ClipMode, Shot } from "@/lib/types";
+import type { VoiceOption } from "@/lib/voice";
 
 const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`;
 
@@ -14,18 +15,32 @@ const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`;
  * Slots may stay empty. A partial shoot still renders: what is attached gets cut
  * and joined in script order, so an operator can film the hook, see the result,
  * and film the rest afterwards.
+ *
+ * Each slot also decides where its audio comes from. Filmed sound gets transcribed
+ * and cut; a voice speaks the shot's written line instead, which is what makes
+ * silent footage — b-roll, hands, a screen recording — usable at all.
  */
 export function ClipSlots({
   shots,
   files,
+  modes,
+  voices,
+  voiceId,
   onPick,
   onClear,
+  onMode,
+  onVoice,
   disabled = false,
 }: {
   shots: Shot[];
   files: (File | null)[];
+  modes: ClipMode[];
+  voices: VoiceOption[];
+  voiceId: string;
   onPick: (index: number, file: File) => void;
   onClear: (index: number) => void;
+  onMode: (index: number, mode: ClipMode) => void;
+  onVoice: (id: string) => void;
   disabled?: boolean;
 }) {
   const attached = files.filter(Boolean).length;
@@ -34,6 +49,8 @@ export function ClipSlots({
     (sum, s, i) => (files[i] ? sum + s.seconds : sum),
     0,
   );
+  const voice = voices.find((v) => v.id === voiceId);
+  const usingVoice = modes.some((m) => m === "voice");
 
   return (
     <div>
@@ -47,15 +64,53 @@ export function ClipSlots({
         </p>
       </div>
 
+      {voices.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-2/50 px-3 py-2.5">
+          <label className="font-mono text-[11px] text-muted" htmlFor="voice-pick">
+            Voice for spoken shots
+          </label>
+          <select
+            id="voice-pick"
+            value={voiceId}
+            disabled={disabled}
+            onChange={(e) => onVoice(e.target.value)}
+            className="rounded-md border border-border bg-surface px-2.5 py-1.5 font-mono text-[12px] text-foreground outline-none focus:border-accent/60 disabled:opacity-40"
+          >
+            {voices.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+                {v.category !== "premade" ? " (yours)" : ""}
+                {v.labels.length ? ` · ${v.labels.slice(0, 3).join(", ")}` : ""}
+              </option>
+            ))}
+          </select>
+
+          {/* Hearing it before spending a render on it. */}
+          {voice?.previewUrl && (
+            <audio key={voice.id} controls preload="none" src={voice.previewUrl} className="h-8 max-w-[240px]" />
+          )}
+
+          {!usingVoice && (
+            <p className="font-mono text-[11px] text-muted/70">
+              no shot is set to a voice yet
+            </p>
+          )}
+        </div>
+      )}
+
       <ol className="mt-4 grid gap-px overflow-hidden rounded-lg border border-border bg-border">
         {shots.map((shot, i) => (
           <Slot
             key={shot.n}
             shot={shot}
             file={files[i] ?? null}
+            mode={modes[i] ?? "original"}
+            voiceName={voice?.name}
             disabled={disabled}
             onPick={(f) => onPick(i, f)}
             onClear={() => onClear(i)}
+            onMode={(m) => onMode(i, m)}
+            canUseVoice={voices.length > 0}
           />
         ))}
       </ol>
@@ -66,16 +121,26 @@ export function ClipSlots({
 function Slot({
   shot,
   file,
+  mode,
+  voiceName,
   onPick,
   onClear,
+  onMode,
   disabled,
+  canUseVoice,
 }: {
   shot: Shot;
   file: File | null;
+  mode: ClipMode;
+  voiceName?: string;
   onPick: (file: File) => void;
   onClear: () => void;
+  onMode: (mode: ClipMode) => void;
   disabled: boolean;
+  canUseVoice: boolean;
 }) {
+  const spoken = mode === "voice";
+
   return (
     <li
       className={`flex flex-col gap-4 bg-surface p-4 transition-colors sm:flex-row sm:items-start ${
@@ -97,7 +162,9 @@ function Slot({
         </p>
 
         {/* The line to say is what the operator reads off the screen while filming,
-            so it stays fully legible rather than being clipped to one line. */}
+            so it stays fully legible rather than being clipped to one line. In a
+            spoken shot it is what the voice reads instead — same text, so the
+            script stays the single source of truth either way. */}
         <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ash-200">“{shot.say}”</p>
 
         <p className="mt-1.5 flex max-w-2xl gap-2 text-[12.5px] leading-relaxed text-muted">
@@ -111,6 +178,35 @@ function Slot({
           <p className="mt-2 inline-block rounded-md bg-foreground/8 px-2 py-1 font-mono text-[11px] text-foreground/80">
             On screen: {shot.onScreen}
           </p>
+        )}
+
+        {canUseVoice && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="inline-flex overflow-hidden rounded-md border border-border">
+              <ModeButton
+                active={!spoken}
+                disabled={disabled}
+                onClick={() => onMode("original")}
+                title="Transcribe the filmed sound, cut its silences and fillers"
+              >
+                filmed sound
+              </ModeButton>
+              <ModeButton
+                active={spoken}
+                disabled={disabled}
+                onClick={() => onMode("voice")}
+                title="Discard the filmed sound and have the voice read this line"
+              >
+                voice
+              </ModeButton>
+            </div>
+
+            <p className="font-mono text-[11px] text-muted">
+              {spoken
+                ? `${voiceName ?? "the voice"} reads this line · silent footage is fine`
+                : "your own voice · needs sound on the clip"}
+            </p>
+          </div>
         )}
       </div>
 
@@ -134,7 +230,7 @@ function Slot({
               e.target.value = "";
             }}
           />
-          {file ? "replace" : "choose clip"}
+          {file ? "replace" : spoken ? "choose b-roll" : "choose clip"}
         </label>
 
         {file && (
@@ -156,5 +252,35 @@ function Slot({
         )}
       </div>
     </li>
+  );
+}
+
+function ModeButton({
+  active,
+  disabled,
+  onClick,
+  title,
+  children,
+}: {
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`px-3 py-1.5 font-mono text-[11px] transition-colors disabled:opacity-40 ${
+        active
+          ? "bg-accent/15 text-accent"
+          : "bg-surface text-muted hover:bg-surface-2 hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

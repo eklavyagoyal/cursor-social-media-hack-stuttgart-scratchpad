@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BriefPanel } from "@/components/BriefPanel";
 import { ClipSlots } from "@/components/ClipSlots";
 import { CutTimeline } from "@/components/CutTimeline";
@@ -13,7 +13,8 @@ import { type RailStep, StepRail, type StepStatus } from "@/components/StepRail"
 import { useTrace } from "@/components/useTrace";
 import type { BrandGenome } from "@/lib/brand";
 import type { ContentAngle, MarketResearch } from "@/lib/research";
-import type { ProcessResult, PublishResult, ShootBrief } from "@/lib/types";
+import type { ClipMode, ProcessResult, PublishResult, ShootBrief } from "@/lib/types";
+import type { VoiceOption } from "@/lib/voice";
 
 type Phase = "idle" | "running" | "done" | "error";
 
@@ -56,6 +57,10 @@ export default function Home() {
    * hook first and the rest later, and index is what maps a take to its shot.
    */
   const [clipFiles, setClipFiles] = useState<(File | null)[]>([]);
+  /** Where each take's audio comes from. Filmed sound unless switched. */
+  const [clipModes, setClipModes] = useState<ClipMode[]>([]);
+  const [voices, setVoices] = useState<VoiceOption[]>([]);
+  const [voiceId, setVoiceId] = useState("");
 
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [processPhase, setProcessPhase] = useState<Phase>("idle");
@@ -306,6 +311,11 @@ export default function Home() {
       setClipFiles((prev) =>
         Array.from({ length: b.shots.length }, (_, i) => (revising ? prev[i] ?? null : null)),
       );
+      setClipModes((prev) =>
+        Array.from({ length: b.shots.length }, (_, i) =>
+          revising ? prev[i] ?? "original" : "original",
+        ),
+      );
       if (revising) setAdjust("");
       setBriefPhase("done");
       briefTrace.finish(
@@ -324,10 +334,13 @@ export default function Home() {
    * Sends the shoot. One take or twelve takes the same route — the server cuts each
    * on its own and joins them in the order they are passed.
    */
-  async function processClips(takes: { file: File; label?: string }[]) {
+  async function processClips(
+    takes: { file: File; label?: string; mode?: ClipMode; text?: string }[],
+  ) {
     if (takes.length === 0) return;
     const many = takes.length > 1;
     const totalBytes = takes.reduce((sum, t) => sum + t.file.size, 0);
+    const spoken = takes.filter((t) => t.mode === "voice").length;
 
     setProcessPhase("running");
     setError(null);
@@ -341,9 +354,24 @@ export default function Home() {
           ? `${takes.length} clips · ${mb(totalBytes)}`
           : `${takes[0].file.name} · ${mb(totalBytes)}`,
       },
-      { after: 600, kind: "step", msg: "Extracting audio" },
-      { after: 3000, kind: "step", msg: "Transcribing, with word timings" },
-      { after: 12000, kind: "step", msg: "Finding silence and filler words" },
+      ...(spoken > 0
+        ? ([
+            {
+              after: 500,
+              kind: "step",
+              msg: `Speaking ${spoken} shot${spoken > 1 ? "s" : ""} in ${
+                voices.find((v) => v.id === voiceId)?.name ?? "the chosen voice"
+              }`,
+            },
+          ] as const)
+        : []),
+      ...(spoken < takes.length
+        ? ([
+            { after: 600, kind: "step", msg: "Extracting audio" },
+            { after: 3000, kind: "step", msg: "Transcribing, with word timings" },
+            { after: 12000, kind: "step", msg: "Finding silence and filler words" },
+          ] as const)
+        : []),
       { after: 18000, kind: "step", msg: "Grouping captions" },
       {
         after: 24000,
@@ -359,7 +387,16 @@ export default function Home() {
       // Repeated field, in shoot order — the server reads it with getAll.
       for (const t of takes) form.append("video", t.file);
       form.append("aggressive", String(aggressive));
-      if (many) form.append("labels", JSON.stringify(takes.map((t) => t.label ?? "")));
+      form.append("labels", JSON.stringify(takes.map((t) => t.label ?? "")));
+      form.append("modes", JSON.stringify(takes.map((t) => t.mode ?? "original")));
+      if (spoken > 0) {
+        // The script line is the text, so a spoken shot says exactly what the
+        // brief promised it would say.
+        form.append("texts", JSON.stringify(takes.map((t) => t.text ?? "")));
+        form.append("voiceId", voiceId);
+        const name = voices.find((v) => v.id === voiceId)?.name;
+        if (name) form.append("voiceName", name);
+      }
 
       const res = await fetch("/api/process", { method: "POST", body: form });
       const json = await res.json();
@@ -386,10 +423,19 @@ export default function Home() {
   }
 
   /** The shoot list, compacted to the takes that actually exist. */
-  function attachedTakes(): { file: File; label?: string }[] {
+  function attachedTakes(): { file: File; label?: string; mode: ClipMode; text: string }[] {
     if (!brief) return [];
     return clipFiles.flatMap((file, i) =>
-      file ? [{ file, label: brief.shots[i]?.label }] : [],
+      file
+        ? [
+            {
+              file,
+              label: brief.shots[i]?.label,
+              mode: clipModes[i] ?? "original",
+              text: brief.shots[i]?.say ?? "",
+            },
+          ]
+        : [],
     );
   }
 
@@ -419,6 +465,27 @@ export default function Home() {
 
   const posted = publishResults.filter((r) => r.status === "posted").length;
   const attachedCount = clipFiles.filter(Boolean).length;
+
+  /**
+   * Loaded once. Without a key the route answers with an empty list rather than an
+   * error, and an empty list simply hides the voice controls — filmed sound is
+   * still the default and nothing in the shoot list depends on this resolving.
+   */
+  useEffect(() => {
+    let live = true;
+    void fetch("/api/voices")
+      .then((r) => r.json())
+      .then((j: { voices?: VoiceOption[] }) => {
+        if (!live || !j.voices?.length) return;
+        setVoices(j.voices);
+        // A cloned voice sorts first, so this prefers one of your own if it exists.
+        setVoiceId((prev) => prev || j.voices![0].id);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const steps: RailStep[] = [
     {
@@ -721,6 +788,17 @@ export default function Home() {
                   <ClipSlots
                     shots={brief.shots}
                     files={clipFiles}
+                    modes={clipModes}
+                    voices={voices}
+                    voiceId={voiceId}
+                    onVoice={setVoiceId}
+                    onMode={(i, mode) =>
+                      setClipModes((prev) => {
+                        const next = [...prev];
+                        next[i] = mode;
+                        return next;
+                      })
+                    }
                     disabled={processPhase === "running"}
                     onPick={(i, file) =>
                       setClipFiles((prev) => {

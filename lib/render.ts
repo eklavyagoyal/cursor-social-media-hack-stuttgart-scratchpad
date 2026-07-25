@@ -7,6 +7,23 @@ import type { CaptionGroup, CutPlan, RenderResult } from "./types";
 export const OUT_WIDTH = 1080;
 export const OUT_HEIGHT = 1920;
 
+/**
+ * Every take is levelled to the same loudness before it is joined.
+ *
+ * Without this a mixed reel jumps: a phone recording lands around −15 LUFS while a
+ * generated voice comes back near −25, and the join makes that a 10 dB drop in the
+ * middle of the reel. −16 LUFS is the level the social platforms normalise toward,
+ * so matching it here also means they leave the audio alone.
+ *
+ * `speechnorm` rather than `loudnorm`: single-pass loudnorm measures as it goes and
+ * mangles the first second of a short clip, and our takes are three to six seconds.
+ *
+ * The peak target stays below full scale on purpose. Instagram re-encodes whatever
+ * it is handed, and a lossy encoder fed a signal that already touches 0 dBFS is
+ * where audible distortion comes from — headroom here costs nothing.
+ */
+const LEVEL_AUDIO = "speechnorm=e=10:r=0.0005:p=0.85:l=1";
+
 export type ProbeResult = {
   duration: number;
   width: number;
@@ -139,7 +156,7 @@ export async function renderVertical(options: RenderOptions): Promise<RenderResu
   });
   if (assets.length === 0) chains[0] = `${base}[v]`;
 
-  if (hasAudio) chains.push(`[0:a]aselect='${expr}',asetpts=N/SR/TB[a]`);
+  if (hasAudio) chains.push(`[0:a]aselect='${expr}',asetpts=N/SR/TB,${LEVEL_AUDIO}[a]`);
 
   const args = [
     "-y",
@@ -155,6 +172,126 @@ export async function renderVertical(options: RenderOptions): Promise<RenderResu
     "-r", "30",
     // Instagram is strict about pixel format and audio sample rate; this is the safe set.
     ...(hasAudio ? ["-c:a", "aac", "-b:a", "128k", "-ar", "44100"] : []),
+    "-movflags", "+faststart",
+    path.resolve(outFile),
+  ];
+
+  try {
+    await run("ffmpeg", args);
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+
+  const info = await probe(outFile);
+  const size = await stat(outFile);
+
+  return {
+    path: outFile,
+    publicUrl: `${urlPrefix}/${slug}.mp4`,
+    width: info.width,
+    height: info.height,
+    duration: info.duration,
+    sizeBytes: size.size,
+  };
+}
+
+export type VoiceoverOptions = {
+  /** The filmed clip. Its own audio, if any, is discarded. */
+  input: string;
+  /** The spoken line from lib/voice.ts. */
+  audio: string;
+  /** Length of the spoken line — this, not the clip, decides the output length. */
+  audioDuration: number;
+  captions: CaptionGroup[];
+  outDir: string;
+  urlPrefix: string;
+  slug: string;
+  burnCaptions?: boolean;
+  captionStyle?: Partial<CaptionStyle>;
+};
+
+/**
+ * Renders a clip against a generated voice instead of its own audio.
+ *
+ * The voice sets the length and the picture follows. The alternative — stretching
+ * the audio to fit the footage — is audible immediately, and a voice that sounds
+ * processed defeats the point of using a good one.
+ *
+ * Footage shorter than the line is looped rather than frozen on its last frame:
+ * b-roll is the whole reason this path exists, and a still frame reads as a
+ * playback failure. `-stream_loop -1` with `-t` handles both directions in one
+ * code path — long footage is trimmed, short footage repeats.
+ *
+ * There is no cut plan here. A generated line has no dead air and no filler to
+ * remove, so the cutter would have nothing to do.
+ */
+export async function renderVoiceover(options: VoiceoverOptions): Promise<RenderResult> {
+  const {
+    input,
+    audio,
+    audioDuration,
+    captions,
+    outDir,
+    urlPrefix,
+    slug,
+    burnCaptions = true,
+  } = options;
+
+  const workDir = path.join(outDir, `.${slug}-work`);
+  await mkdir(outDir, { recursive: true });
+  await mkdir(workDir, { recursive: true });
+
+  const outFile = path.join(outDir, `${slug}.mp4`);
+  const assets =
+    burnCaptions && captions.length > 0
+      ? renderCaptionSet(captions, OUT_WIDTH, OUT_HEIGHT, options.captionStyle)
+      : [];
+
+  await Promise.all(assets.map((a) => writeFile(path.join(workDir, a.name), a.png)));
+
+  const base = [
+    "[0:v]setpts=N/FRAME_RATE/TB",
+    `scale=${OUT_WIDTH}:${OUT_HEIGHT}:force_original_aspect_ratio=increase`,
+    `crop=${OUT_WIDTH}:${OUT_HEIGHT}`,
+  ].join(",");
+
+  const chains: string[] = [];
+  let label = "base";
+  chains.push(`${base}[${label}]`);
+
+  assets.forEach((a, i) => {
+    const next = i === assets.length - 1 ? "v" : `ov${i}`;
+    chains.push(
+      `[${label}][${i + 2}:v]overlay=0:0:format=auto:` +
+        `enable='between(t,${a.group.start.toFixed(3)},${a.group.end.toFixed(3)})'[${next}]`,
+    );
+    label = next;
+  });
+  if (assets.length === 0) chains[0] = `${base}[v]`;
+
+  // Levelled to the same target as a filmed take, so a mixed reel does not step
+  // down in volume the moment the voice takes over.
+  chains.push(`[1:a]${LEVEL_AUDIO}[a]`);
+
+  const args = [
+    "-y",
+    // Before -i, so it applies to the footage and not to the voice.
+    "-stream_loop", "-1",
+    "-i", path.resolve(input),
+    "-i", path.resolve(audio),
+    ...assets.flatMap((a) => ["-i", path.join(workDir, a.name)]),
+    "-filter_complex", chains.join(";"),
+    "-map", "[v]",
+    "-map", "[a]",
+    "-t", audioDuration.toFixed(3),
+    "-c:v", "libx264",
+    "-preset", "veryfast",
+    "-crf", "21",
+    "-pix_fmt", "yuv420p",
+    "-r", "30",
+    "-c:a", "aac",
+    "-b:a", "128k",
+    "-ar", "44100",
     "-movflags", "+faststart",
     path.resolve(outFile),
   ];
