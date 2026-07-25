@@ -13,5 +13,19 @@ Participant Guidebook  Social Media hackathon.pdf
 
 # next / node
 .next/
+out/
+build/
 next-env.d.ts
 *.tsbuildinfo
+*.pem
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# generated media — raw uploads, renders and scratch audio
+/public/uploads/
+/public/renders/
+/tmp/
