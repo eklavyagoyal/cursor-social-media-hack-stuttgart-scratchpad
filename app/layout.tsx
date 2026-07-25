@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, JetBrains_Mono, Geist } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const serif = Instrument_Serif({
-  variable: "--font-serif-display",
-  subsets: ["latin"],
-  weight: "400",
+/**
+ * Same two faces, same files as legacy-web: Archivo carries everything and
+ * JetBrains Mono carries the labels. Self-hosted rather than fetched from Google
+ * — it matches the rest of the fleet, and a build here never depends on a font
+ * CDN being reachable.
+ */
+const archivo = localFont({
+  src: [
+    { path: "../public/fonts/archivo-400.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/archivo-600.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/archivo-800.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-archivo",
+  display: "swap",
 });
 
-const mono = JetBrains_Mono({
-  variable: "--font-mono-trace",
-  subsets: ["latin"],
-});
-
-const sans = Geist({
-  variable: "--font-sans-body",
-  subsets: ["latin"],
+const jbmono = localFont({
+  src: [
+    { path: "../public/fonts/jetbrains-mono-400.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/jetbrains-mono-600.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-jbmono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="de"
-      className={`${serif.variable} ${mono.variable} ${sans.variable} h-full antialiased`}
+      className={`${archivo.variable} ${jbmono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">{children}</body>
     </html>

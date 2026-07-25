@@ -19,6 +19,27 @@
   --live: #c8ff4d;
   /* Alias, so brand-coloured UI and accent-coloured UI can never drift apart. */
   --brand: var(--accent);
+
+  /* ---- Typography, from legacy-web ----
+     Archivo at 800 with negative tracking is the fleet's display voice; the mono
+     eyebrow above it is the other half of that look. Both self-hosted, matching
+     legacy-web — no external font request. */
+  --weight-display: 800;
+  --tracking-display: -0.02em;
+  --fs-label: 0.6875rem;
+  --leading-display: 1.06;
+
+  /* ---- Derived from the ramp, not hardcoded ----
+     legacy-web mixes its hairlines and labels out of fg/bg so a palette change
+     can't leave a stale grey behind. Same idea here. */
+  --line: color-mix(in oklab, var(--foreground) 13%, transparent);
+  --line-soft: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --label-color: color-mix(in oklab, var(--foreground) 44%, var(--background));
+  --panel: color-mix(in oklab, var(--foreground) 4%, var(--background));
+  --panel-2: color-mix(in oklab, var(--foreground) 7%, var(--background));
+  --ring: color-mix(in oklab, var(--foreground) 55%, var(--background));
+
+  --radius-ui: 0.5rem;
 }
 
 @theme inline {
@@ -31,6 +52,9 @@
   --color-accent: var(--accent);
   --color-live: var(--live);
   --color-brand: var(--brand);
+  --color-ring: var(--ring);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
 
   --color-ash-100: #ece8e0;
   --color-ash-200: #c4bfb5;
@@ -40,9 +64,12 @@
   --color-ash-700: #22211e;
   --color-ash-800: #151412;
 
-  --font-sans: var(--font-sans-body);
-  --font-serif: var(--font-serif-display);
-  --font-mono: var(--font-mono-trace);
+  /* Archivo carries both body and headings, the way legacy-web does it — the
+     weight and the tracking do the work, not a second family. `font-serif` stays
+     mapped so components written against it keep rendering the display face. */
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jbmono), ui-monospace, Menlo, monospace;
 
   --animate-land: land 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-rise: rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -94,15 +121,50 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans-body), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Display face for headings — a serif against the mono trace reads as editorial
-   rather than as another dashboard. */
+/* The fleet's headline treatment: heavy grotesk, tracked in tight, set close. */
 .display {
-  font-family: var(--font-serif-display), "Iowan Old Style", Palatino, Georgia, serif;
-  letter-spacing: -0.015em;
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-weight: var(--weight-display);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+
+/* Mono label above a heading — the other half of the Legacy look. */
+.eyebrow {
+  font-family: var(--font-jbmono), ui-monospace, Menlo, monospace;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--label-color);
+}
+
+/* Wide by default: this is a workbench, not a landing page. The cap only stops
+   the columns from drifting apart on a 34" display. */
+.container-app {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1600px;
+  padding-inline: 1.5rem;
+}
+@media (min-width: 1024px) {
+  .container-app {
+    padding-inline: 2.5rem;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ui);
+}
+
+.hairline {
+  border-color: var(--line);
 }
 
 .trace-line {
