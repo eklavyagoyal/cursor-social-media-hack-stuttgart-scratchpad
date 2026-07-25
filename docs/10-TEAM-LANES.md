@@ -178,8 +178,13 @@ the *only* thing round 1 sees. It cannot start at 16:00.
 
 ## Standing rules
 
-1. **Commit every 15–20 min, push every time.** The git log is your defense against the pre-built
-   penalty. It's also your undo button at 15:30.
+1. **Commit AND PUSH every 15 minutes — and after every unit that works.** Not at the end, not
+   "when it's clean." Two people plus multiple agents are writing to this repo simultaneously;
+   unpushed work is invisible to everyone else, and a second agent that can't see your work will
+   write the same file again. `git pull --rebase origin main` before every push. `npx tsc --noEmit`
+   clean before every push — a red `main` blocks your teammate. Never force-push, never rewrite
+   pushed history. The canonical version of this rule lives in `AGENTS.md`, which every agent
+   auto-reads.
 2. **Deploy every 20 min.** Always have a last-known-good prod URL.
 3. **Nobody debugs alone for more than 15 minutes.** Say it out loud, swap eyes, or cut the feature.
 4. **No refactors after 13:00.** Ugly and working beats clean and broken. Always.

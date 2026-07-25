@@ -61,6 +61,17 @@ awards.** Only *ideas, notes, sketches, research* and *generic boilerplate* may 
 
 ---
 
+## ⚠️ Push constantly — two people + multiple agents, one repo
+
+```bash
+git pull --rebase origin main   →   commit   →   push        # every 15 min, no exceptions
+npx tsc --noEmit                                            # clean before every push
+```
+
+Unpushed work is invisible to your teammate and to every agent. Two agents that can't see each
+other's work will write the same file twice. Canonical rule: **`AGENTS.md`** (auto-read by every
+agent in this repo). Never force-push `main`. On a conflict, the other side's naming wins.
+
 ## The 10 commandments
 
 1. **The 2-minute video is 100% of round 1.** Reserve 15:15–15:50 for it. Everyone else panic-records at 16:25.

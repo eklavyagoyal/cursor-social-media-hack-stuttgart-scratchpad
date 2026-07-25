@@ -11,6 +11,27 @@ You are finishing the frontend of **legacy-creator**, a hackathon project judged
 The backend is complete and working. Most of the frontend exists too. **You are integrating, not
 rewriting.**
 
+## ⚠️ FIRST: two people and another agent are editing this repo right now
+
+**Commit and push every 15 minutes, minimum — and after every single thing that works.**
+
+```bash
+git pull --rebase origin main    # ALWAYS first
+git add <only your own files>
+git commit -m "..."
+git push origin main
+```
+
+Unpushed work is invisible to everyone else, and a second agent that can't see your work will write
+the same file again. Do not batch up an hour of changes. Do not wait until it's clean. Push.
+
+`npx tsc --noEmit` must be clean before every push — a red `main` blocks the other person.
+
+Never force-push. Never rewrite pushed history. On a conflict: look at both sides, and if the other
+side renamed something, **their naming wins** — adapt, don't revert.
+
+Also read `AGENTS.md` at the repo root before your first edit.
+
 ## Read these four files before you write anything
 
 1. `app/page.tsx` — 321 lines, already works. Phases: brief → process → publish, plus a `loadDemo()`
