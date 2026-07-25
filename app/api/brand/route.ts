@@ -15,8 +15,25 @@ export async function POST(req: Request) {
     if (!url?.trim()) {
       return NextResponse.json({ error: "Keine URL angegeben." }, { status: 400 });
     }
+    if (url.length > 2048) {
+      return NextResponse.json({ error: "URL zu lang." }, { status: 400 });
+    }
 
-    const genome = await crawlBrandGenome(url.trim());
+    // Scheme allowlist. Our server never fetches this URL — Firecrawl's
+    // infrastructure does — so private-IP filtering would be pointless here
+    // (their crawler can't reach our network). But `new URL()` happily accepts
+    // file:, gopher: and data:, and we shouldn't forward those to a paid API.
+    let parsed: URL;
+    try {
+      parsed = new URL(url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`);
+    } catch {
+      return NextResponse.json({ error: "Keine gültige URL." }, { status: 400 });
+    }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return NextResponse.json({ error: `Schema ${parsed.protocol} nicht erlaubt.` }, { status: 400 });
+    }
+
+    const genome = await crawlBrandGenome(parsed.toString());
     return NextResponse.json({ genome });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
