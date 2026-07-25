@@ -1,0 +1,49 @@
+{
+  "id": "brief-fixture",
+  "topic": "Warum unsere Espressomischung dreimal geröstet wird",
+  "hook": "Die meisten Röstereien rösten einmal. Wir dreimal — und das hat einen unangenehmen Grund.",
+  "totalSeconds": 28,
+  "shots": [
+    {
+      "n": 1,
+      "label": "Hook",
+      "seconds": 4,
+      "say": "Die meisten rösten einmal. Wir dreimal. Und das ist eigentlich Faulheit — nur andersrum.",
+      "camera": "Handy vertikal auf Brusthöhe, Arm ausgestreckt, du stehst direkt vor der Trommel. Gesicht füllt das obere Drittel.",
+      "onScreen": "3× geröstet"
+    },
+    {
+      "n": 2,
+      "label": "Problem",
+      "seconds": 8,
+      "say": "Einmal rösten heißt: du entscheidest dich für einen Kompromiss. Die Bohne, die Süße braucht, kriegt dieselbe Hitze wie die, die Säure braucht.",
+      "camera": "Handy auf die Bohnenschale legen, langsam hochziehen bis auf Augenhöhe. Eine Bewegung, nicht schneiden."
+    },
+    {
+      "n": 3,
+      "label": "Beweis",
+      "seconds": 10,
+      "say": "Also trennen wir. Jede Sorte kommt einzeln rein, mit eigener Kurve. Erst danach mischen wir. Das dauert dreimal so lang und kostet dreimal so viel Gas.",
+      "camera": "Nah auf die Hände, während du drei getrennte Schalen nebeneinander schiebst. Handy auf Tischhöhe, leicht schräg von oben.",
+      "onScreen": "3 Kurven, 1 Mischung"
+    },
+    {
+      "n": 4,
+      "label": "Payoff",
+      "seconds": 6,
+      "say": "Deswegen schmeckt der Espresso auch mit Milch noch nach irgendwas. Probier's, und wenn du keinen Unterschied merkst, sag's mir ehrlich.",
+      "camera": "Zurück auf Augenhöhe, Tasse ins Bild halten, direkt in die Kamera sprechen. Letzte Sekunde still stehen bleiben."
+    }
+  ],
+  "caption": "Dreimal rösten klingt nach Angeberei. Ist aber nur die Konsequenz aus einem Problem, das die meisten wegmischen.\n\nJede Sorte bekommt ihre eigene Kurve, gemischt wird erst danach. Dauert länger, kostet mehr Gas, schmeckt aber auch durch Milch durch.",
+  "hashtags": [
+    "#espresso",
+    "#kaffeerösterei",
+    "#specialtycoffee",
+    "#handwerk",
+    "#stuttgart"
+  ],
+  "cta": "Sag mir in den Kommentaren, ob du den Unterschied merkst.",
+  "soundIdea": "Originalton — Trommelgeräusch im Hintergrund ist das halbe Video.",
+  "bestPostTime": "Di–Do 18:30–20:00"
+}
