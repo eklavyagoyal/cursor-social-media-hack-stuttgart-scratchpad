@@ -17,15 +17,29 @@ the script comes back in your own phrases, about something that is currently lan
 
 ## The pipeline
 
+Judges score **strong sponsor tool integration** inside Technical Innovation (30%). Every
+sponsor tool sits on this path — not bolted on for a prize, not a checklist. Built in **Cursor**.
+
 ```
   URL ──▶ brand genome ──▶ market scan ──▶ angle ──▶ shoot brief ──▶ [ you film it ]
        Firecrawl scrape    Firecrawl search          GPT-5.6                    │
        + GPT-5.6           short-form, last 30d                                 │
+                           (+ fal.ai stills on palette)                         │
                                                                                 ▼
   Instagram ◀── publish ◀── mp4 ◀── burn captions ◀── cut ◀── transcribe ◀── upload
     Graph API              ffmpeg   @napi-rs/canvas  lib/cut  ElevenLabs Scribe
-                                                             (word-level timings)
+  (+ Telegram)                                                    (word-level timings)
+         ▲
+         └── n8n nightly loop — cron → Firecrawl trend sweep → refill when nobody's looking
 ```
+
+| Sponsor | Role on the critical path |
+|---|---|
+| **Cursor** | How we built it — agents + editor, end to end, commit history from kickoff |
+| **Firecrawl** | Brand genome scrape + niche market scan (and the n8n nightly sweep) |
+| **ElevenLabs** | Scribe word-level transcription — the timings the cut plan is built from |
+| **fal.ai** | On-palette generative stills on the production path (`@fal-ai/client`) |
+| **n8n** | Autonomy spine — nightly trend loop when nobody's looking; the app publishes on approve |
 
 Word-level timings are what makes the rest possible: the cut plan is built from word
 boundaries, and caption groups are re-timed onto the *output* timeline after the cuts land, so
