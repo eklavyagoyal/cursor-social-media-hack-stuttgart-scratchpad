@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import type { PublishResult } from "./types";
 
 const GRAPH_VERSION = "v23.0";
@@ -150,4 +151,28 @@ export async function publishToTelegram(
 
 export function publishingEnabled(): boolean {
   return process.env.PUBLISH_ENABLED === "true";
+}
+
+/**
+ * The caption is written by whoever calls the route, and it lands verbatim on a
+ * real business account. This app is meant to be deployed publicly during the
+ * demo, so without an operator secret anyone who reaches the URL can post
+ * arbitrary text under our name.
+ *
+ * Fails closed: an unset PUBLISH_SECRET denies every request rather than
+ * silently leaving the account open.
+ */
+export function publishAuthorized(provided: string | null | undefined): boolean {
+  const secret = process.env.PUBLISH_SECRET;
+  if (!secret || !provided) return false;
+
+  const a = Buffer.from(provided);
+  const b = Buffer.from(secret);
+  // timingSafeEqual throws on length mismatch, and the length itself is not a
+  // secret worth protecting here.
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export function publishSecretConfigured(): boolean {
+  return Boolean(process.env.PUBLISH_SECRET);
 }

@@ -1,6 +1,12 @@
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { publishToInstagram, publishToTelegram, publishingEnabled } from "@/lib/publish";
+import {
+  publishAuthorized,
+  publishSecretConfigured,
+  publishToInstagram,
+  publishToTelegram,
+  publishingEnabled,
+} from "@/lib/publish";
 import { toPublicUrl } from "@/lib/storage";
 import type { PublishResult, PublishTarget } from "@/lib/types";
 
@@ -20,6 +26,19 @@ export async function POST(req: Request) {
     if (!body.slug) return NextResponse.json({ error: "slug fehlt." }, { status: 400 });
     const caption = body.caption ?? "";
     const targets = body.targets?.length ? body.targets : (["instagram", "telegram"] as PublishTarget[]);
+
+    // Checked before any work: this route posts a client-supplied caption to a
+    // real account, so it must never be callable by a passing visitor.
+    if (!publishAuthorized(req.headers.get("x-publish-secret"))) {
+      return NextResponse.json(
+        {
+          error: publishSecretConfigured()
+            ? "Operator-Freigabe falsch."
+            : "PUBLISH_SECRET ist nicht gesetzt — Posten ist deshalb komplett gesperrt.",
+        },
+        { status: 401 },
+      );
+    }
 
     if (!publishingEnabled()) {
       return NextResponse.json({
