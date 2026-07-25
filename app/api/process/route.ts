@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { buildCaptions, buildCutPlan } from "@/lib/cut";
 import { extractAudio, probe, renderVertical } from "@/lib/render";
+import { sweepOldArtifacts } from "@/lib/sweep";
 import { transcribeFile } from "@/lib/transcribe";
 
 export const runtime = "nodejs";
@@ -12,12 +13,29 @@ const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const RENDER_DIR = path.join(process.cwd(), "public", "renders");
 const AUDIO_DIR = path.join(process.cwd(), "tmp", "audio");
 
+/** A phone clip for a Reel is tens of MB. Anything past this is a mistake or an
+ *  attack, and either way it fills a small Hetzner disk in one request. */
+const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_MB ?? 250) * 1_000_000;
+
 export async function POST(req: Request) {
   try {
+    // Bound the disk before writing anything new. Never fails the job.
+    await sweepOldArtifacts();
+
     const form = await req.formData();
     const file = form.get("video");
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Kein Video im Upload gefunden." }, { status: 400 });
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        {
+          error:
+            `Video ist ${(file.size / 1e6).toFixed(0)} MB, erlaubt sind ${MAX_UPLOAD_BYTES / 1e6} MB. ` +
+            `Für ein Reel reichen 20-40 Sekunden.`,
+        },
+        { status: 413 },
+      );
     }
 
     const aggressive = form.get("aggressive") === "true";

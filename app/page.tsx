@@ -4,11 +4,13 @@ import { useRef, useState } from "react";
 import { BriefPanel } from "@/components/BriefPanel";
 import { CutTimeline } from "@/components/CutTimeline";
 import { GenomeCard } from "@/components/GenomeCard";
+import { MarketPanel } from "@/components/MarketPanel";
 import { ReelPreview } from "@/components/ReelPreview";
 import { ShipPanel } from "@/components/ShipPanel";
 import { TraceStream } from "@/components/TraceStream";
 import { useTrace } from "@/components/useTrace";
 import type { BrandGenome } from "@/lib/brand";
+import type { ContentAngle, MarketResearch } from "@/lib/research";
 import type { ProcessResult, PublishResult, ShootBrief } from "@/lib/types";
 
 type Phase = "idle" | "running" | "done" | "error";
@@ -34,6 +36,10 @@ export default function Home() {
   const [brandSkipped, setBrandSkipped] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const [research, setResearch] = useState<MarketResearch | null>(null);
+  const [researchPhase, setResearchPhase] = useState<Phase>("idle");
+  const [angle, setAngle] = useState<string | undefined>();
+
   const [topic, setTopic] = useState("");
   const [brief, setBrief] = useState<ShootBrief | null>(null);
   const [briefPhase, setBriefPhase] = useState<Phase>("idle");
@@ -52,6 +58,7 @@ export default function Home() {
   const secretInput = useRef<HTMLInputElement | null>(null);
 
   const brandTrace = useTrace();
+  const researchTrace = useTrace();
   const briefTrace = useTrace();
   const processTrace = useTrace();
 
@@ -70,7 +77,7 @@ export default function Home() {
   /** Brand step resolved one way or another — the topic input is live. */
   const briefUnlocked = Boolean(genome) || brandSkipped;
 
-  function applyGenome(g: BrandGenome) {
+  function applyGenome(g: BrandGenome, { thenResearch = true } = {}) {
     setGenome(g);
     setBrandPhase("done");
     brandTrace.finish(
@@ -78,6 +85,47 @@ export default function Home() {
       `${g.voice.petPhrases.length} Formulierungen wörtlich übernommen`,
       `Palette: ${g.look.palette.slice(0, 3).join("  ")}`,
     );
+    // The second crawl follows straight on: knowing how they sound is only half
+    // the input, the other half is what the niche is posting this month.
+    if (thenResearch) void runResearch(g);
+  }
+
+  async function runResearch(g: BrandGenome) {
+    setResearchPhase("running");
+    setResearch(null);
+    setAngle(undefined);
+    researchTrace.start([
+      { after: 0, kind: "step", msg: "Suchanfragen aus dem Marken-Profil ableiten" },
+      { after: 1800, kind: "step", msg: "Kurzvideos im Themenfeld suchen · letzter Monat" },
+      { after: 5000, kind: "ok", msg: "Instagram · TikTok · YouTube durchsucht" },
+      { after: 6500, kind: "step", msg: "Winkel, Hook und Schnittfolge ableiten" },
+    ]);
+    try {
+      const res = await fetch("/api/research", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ genome: g }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Marktrecherche fehlgeschlagen.");
+      const r = json.research as MarketResearch;
+      setResearch(r);
+      setResearchPhase("done");
+      researchTrace.finish(
+        `${r.queries.length} Suchanfragen · ${r.references.length} Fundstellen`,
+        ...(r.angles.length ? [`${r.angles.length} Winkel mit Schnittfolge`] : []),
+      );
+      if (r.degraded) researchTrace.warn(r.degraded);
+    } catch (e) {
+      const msg = humanError(e instanceof Error ? e.message : String(e));
+      researchTrace.fail(msg);
+      setResearchPhase("error");
+    }
+  }
+
+  function pickAngle(a: ContentAngle) {
+    setAngle(a.angle);
+    setTopic(a.angle);
   }
 
   async function cachedGenome(): Promise<BrandGenome> {
@@ -91,8 +139,9 @@ export default function Home() {
     setError(null);
     setNotice(null);
     try {
-      const [g, b, r] = await Promise.all([
+      const [g, m, b, r] = await Promise.all([
         fetch("/demo/genome.json").then((res) => (res.ok ? res.json() : null)),
+        fetch("/demo/research.json").then((res) => (res.ok ? res.json() : null)),
         fetch("/demo/brief.json").then((res) => res.json()),
         fetch("/demo/result.json").then((res) => res.json()),
       ]);
@@ -103,6 +152,11 @@ export default function Home() {
         brandTrace.reset();
       } else {
         setBrandSkipped(true);
+      }
+      if (m) {
+        setResearch(m);
+        setResearchPhase("done");
+        researchTrace.reset();
       }
       setBrief(b);
       setTopic(b.topic);
@@ -147,7 +201,9 @@ export default function Home() {
           setNotice(
             "Die Seite rendert erst im Browser, da kommt beim Lesen fast nichts an. Wir arbeiten mit dem gespeicherten Marken-Profil weiter.",
           );
-          applyGenome(g);
+          // No auto-research on the fallback: if the crawl just failed, firing a
+          // second one at the same network is the wrong reflex. There's a button.
+          applyGenome(g, { thenResearch: false });
           return;
         }
         throw new Error(json.error ?? "Marke lesen fehlgeschlagen.");
@@ -168,7 +224,7 @@ export default function Home() {
       const g = await cachedGenome();
       setError(null);
       setNotice("Gespeichertes Marken-Profil geladen — nicht von dieser URL gelesen.");
-      applyGenome(g);
+      applyGenome(g, { thenResearch: false });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -183,16 +239,29 @@ export default function Home() {
       ...(genome
         ? ([{ after: 900, kind: "ok", msg: `Grundierung: ${genome.name}` }] as const)
         : []),
+      ...(research?.references.length
+        ? ([
+            {
+              after: 1300,
+              kind: "ok",
+              msg: `${research.references.length} Fundstellen aus dem Themenfeld im Kontext`,
+            },
+          ] as const)
+        : []),
       { after: 2000, kind: "step", msg: "Hook schreiben" },
       { after: 5000, kind: "step", msg: "Shots und Kameraführung" },
       { after: 9000, kind: "step", msg: "Caption und Hashtags" },
     ]);
     try {
+      // Both blocks verbatim: lib/brand.ts renders how they sound, lib/research.ts
+      // renders what the niche is doing. Neither is reformatted here.
+      const context =
+        [genome?.context, research?.context].filter(Boolean).join("\n\n") || undefined;
+
       const res = await fetch("/api/brief", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        // Verbatim — the grounding block is pre-rendered by lib/brand.ts.
-        body: JSON.stringify({ topic, context: genome?.context }),
+        body: JSON.stringify({ topic, context }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Briefing fehlgeschlagen.");
@@ -277,7 +346,7 @@ export default function Home() {
     <main className="mx-auto w-full max-w-5xl px-6 py-14 sm:px-8">
       <header className="border-b border-border pb-10">
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
-          Marke → Vorgabe → Dreh → Post
+          Marke → Markt → Vorgabe → Dreh → Post
         </p>
         <h1 className="display mt-3 text-4xl leading-[1.1] sm:text-5xl">
           Du filmst 30 Sekunden.
@@ -370,10 +439,40 @@ export default function Home() {
         )}
       </Step>
 
+      {genome && (
+        <Step
+          n={2}
+          title="Markt"
+          hint="Zweiter Crawl: was im Themenfeld gerade wirklich gepostet wird — und was das für Format, Schnittfolge und Länge heißt."
+        >
+          {researchPhase !== "running" && (
+            <button
+              type="button"
+              onClick={() => genome && runResearch(genome)}
+              className="rounded-xl border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60"
+            >
+              {research ? "Neu scannen" : "Themenfeld scannen"}
+            </button>
+          )}
+
+          {researchTrace.lines.length > 0 && (
+            <div className="mt-6">
+              <TraceStream lines={researchTrace.lines} running={researchPhase === "running"} />
+            </div>
+          )}
+
+          {research && (
+            <div className="mt-8">
+              <MarketPanel research={research} chosen={angle} onPick={pickAngle} />
+            </div>
+          )}
+        </Step>
+      )}
+
       {briefUnlocked && (
         <div className="animate-rise">
           <Step
-            n={2}
+            n={3}
             title="Vorgabe"
             hint={
               genome
@@ -413,7 +512,7 @@ export default function Home() {
           </Step>
 
           <Step
-            n={3}
+            n={4}
             title="Dreh & Upload"
             hint="Handy, vertikal, einmal durchsprechen. Fehler sind egal — die schneidet er raus."
           >
@@ -462,7 +561,7 @@ export default function Home() {
           </Step>
 
           <Step
-            n={4}
+            n={5}
             title="Schnitt & Untertitel"
             hint="Vorschau läuft ohne Rendern — das mp4 liegt daneben."
           >
@@ -505,7 +604,7 @@ export default function Home() {
           </Step>
 
           <Step
-            n={5}
+            n={6}
             title="Posten"
             hint="Instagram holt die Datei selbst ab, deshalb geht sie vorher öffentlich online."
           >
