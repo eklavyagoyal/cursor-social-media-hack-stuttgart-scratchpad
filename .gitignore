@@ -10,3 +10,8 @@ node_modules/
 # Organizers' participant guidebook — not ours to redistribute publicly.
 # Delete this line if you do want it tracked.
 Participant Guidebook  Social Media hackathon.pdf
+
+# next / node
+.next/
+next-env.d.ts
+*.tsbuildinfo
