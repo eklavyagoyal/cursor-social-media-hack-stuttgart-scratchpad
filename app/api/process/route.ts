@@ -67,7 +67,8 @@ export async function POST(req: Request) {
       plan,
       captions,
       outDir: RENDER_DIR,
-      urlPrefix: "/renders",
+      // Served by app/media/[kind]/[name] — not as a static file, see that route.
+      urlPrefix: "/media/renders",
       slug,
       hasAudio: source.hasAudio,
       burnCaptions,
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       slug,
       source,
-      rawUrl: `/uploads/${slug}${ext}`,
+      rawUrl: `/media/uploads/${slug}${ext}`,
       transcript,
       plan,
       captions,

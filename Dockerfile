@@ -47,8 +47,10 @@ COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/next.config.ts ./next.config.ts
 
-# Written at request time: uploads + renders live under public/ so Next serves
-# them, audio scratch under tmp/. Must be writable by the non-root user.
+# Written at request time: uploads + renders under public/, audio scratch under
+# tmp/. Must be writable by the non-root user. Note these are NOT served as static
+# assets — Next indexes public/ at server start, so anything written later 404s.
+# app/media/[kind]/[name] streams them instead.
 RUN mkdir -p public/uploads public/renders tmp/audio \
  && chown -R node:node public tmp
 

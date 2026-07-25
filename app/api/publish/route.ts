@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     // Basename only: the slug comes from the client and must not escape the dir.
     const safeSlug = path.basename(body.slug);
     const filePath = path.join(RENDER_DIR, `${safeSlug}.mp4`);
-    const publicUrl = await toPublicUrl(filePath, `/renders/${safeSlug}.mp4`);
+    const publicUrl = await toPublicUrl(filePath, `/media/renders/${safeSlug}.mp4`);
 
     const results: PublishResult[] = [];
     if (targets.includes("instagram")) {
