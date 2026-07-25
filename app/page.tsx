@@ -476,8 +476,10 @@ export default function Home() {
             title="Vorgabe"
             hint={
               genome
-                ? `Was soll rein? Claude schreibt das Drehbuch in der Tonalität von ${genome.name}.`
-                : "Was soll rein? Claude macht daraus ein Drehbuch."
+                ? `Was soll rein? Das Drehbuch entsteht in der Tonalität von ${genome.name}${
+                    research?.references.length ? " und mit dem, was im Themenfeld läuft" : ""
+                  }.`
+                : "Was soll rein? Daraus wird ein Drehbuch."
             }
           >
             <div className="flex flex-col gap-3 sm:flex-row">
