@@ -1,129 +1,121 @@
-# 🏆 WAR ROOM — Social Media Hackathon Stuttgart
+# legacy-creator
 
-**Sat 2026-07-25 · Infomotion, 4th floor, Friedrichstr 6 · be there 09:00**
-20+ teams · teams of 1–4 (2–3 recommended) · all comms on **Discord**
+**You film 30 seconds on your phone. It comes back as a posted Reel.**
+
+Give it a topic and it writes a shoot brief — a shot list with what to say, how to hold the
+camera, and how long each shot runs. You film it in one take. It transcribes with word-level
+timings, cuts the silence and the "ähm"s, burns captions, renders a 1080×1920 mp4 and posts it
+to Instagram.
+
+The first step reads your website and extracts how you actually write, so the script comes back
+in your own phrases instead of generic Reel-speak.
+
+▶ **[`samples/reel.mp4`](samples/reel.mp4)** — rendered by the pipeline · full output in
+[`samples/`](samples/)
+
+## The pipeline
 
 ```
-09:00 check-in + breakfast     11:00 🔒 TEAM REG DEADLINE     13:00 lunch
-15:00 🎬 stop coding            16:30 🔒 SUBMISSION            17:30 top 8 live     19:00 winners
+  URL ──▶ brand genome ──▶ topic ──▶ shoot brief ──▶ [ you film it ] ──▶ upload
+       Firecrawl + Claude                  Claude                            │
+                                                                             ▼
+  Instagram ◀── publish ◀── mp4 ◀── burn captions ◀── cut ◀── transcribe ◀────┘
+    Graph API              ffmpeg    @napi-rs/canvas   lib/cut  ElevenLabs Scribe
+                                                                (word-level timings)
 ```
 
-**Judging is two rounds.** Round 1 is **judged online from your submission** — a 2-minute video, a
-public repo, a 5-slide deck, a live URL. Only the **top 8** pitch live (3 min pitch + 2 min demo +
-2 min Q&A). So the submission artifacts are the primary deliverable, not an afterthought.
+Word-level timings are what makes the rest possible: the cut plan is built from word
+boundaries, and caption groups are re-timed onto the *output* timeline after the cuts land, so
+they stay in sync with a video that no longer matches the transcript's clock.
 
-**Rubric:** 30% real problem for **content creators** · 30% technical innovation & **sponsor tool
-integration** · 25% execution & working demo (*"stable during the demo"*) · 15% presentation
-(*"engaging video"*). Full read → [`docs/00-WIN-CONDITIONS.md`](docs/00-WIN-CONDITIONS.md)
+## What is real, and what isn't
 
----
+Precise, because a vague limitations section is worth less than an honest one.
 
-## The product: **DOPPEL**
+| | State |
+|---|---|
+| **Cut planning** — silence, hesitations, head/tail trim | Real. Verify in ~2s: `npm run verify:render` |
+| **Caption grouping + re-timing onto the output timeline** | Real, same command |
+| **Vertical render, 1080×1920, captions burned in** | Real, same command. This ffmpeg build has no libass, so captions are drawn as PNGs with `@napi-rs/canvas` and composited |
+| **Transcription** | Real, needs `ELEVENLABS_API_KEY`. Called over REST, not the SDK, which mangles the `words` field |
+| **Brand genome + shoot brief** | Real, need `FIRECRAWL_API_KEY` + `ANTHROPIC_API_KEY`. Without them the UI falls back to the cached profile and says so on screen |
+| **Instagram publishing** | Implemented against the Graph API v23. Needs an Instagram **Business** account, a token, and the file behind a public HTTPS URL — Instagram fetches the video itself, so localhost cannot work. Gated behind `PUBLISH_ENABLED` **and** an operator secret |
+| **Telegram publishing** | Real, needs a bot token. Used as the proof channel that never waits on a platform review |
+| **The cached demo path** | Real files, committed: `public/demo/`. Runs with no keys and no network |
+| **`samples/reel.mp4`** | A real render of a synthetic ffmpeg test clip — colour bars with real captions. Point the seeder at your own footage to change that |
 
-> **Paste one link. Get a content studio that sounds exactly like you — and ships without you.**
+Publishing is locked twice on purpose. `POST /api/publish` takes a caption from the client and
+posts it to a real account, and the app is deployed publicly — so the route requires an
+`x-publish-secret` header and returns 401 without it, even before it checks whether publishing
+is enabled at all. `scripts/smoke.mts` asserts that as a regression test.
 
-One URL → we reverse-engineer the **Brand Genome** (voice, verbatim pet phrases, palette, hooks,
-pillars) → generate a full multi-platform **Drop** (LinkedIn post, thread, carousel, vertical short
-narrated in a *cloned voice*) → **n8n ships it** and refills the queue on a nightly trend loop.
-
-**Firecrawl reads the brand · Claude writes it · fal renders it · ElevenLabs speaks it · n8n ships it.**
-All five sponsors on the critical path — which is worth 30% of the score, not just prize eligibility.
-
-**The unfakeable demo:** ask a judge for a brand URL on stage. 90 seconds later their Genome is on
-screen and a finished short in their voice is playing. No other team can take a *brand* as input.
-
-Full spec → [`docs/01-THE-PRODUCT.md`](docs/01-THE-PRODUCT.md)
-
----
-
-## ⚠️ Read this before you write any code
-
-The guidebook is explicit: **pre-built project-specific code can get you penalized or removed from
-awards.** Only *ideas, notes, sketches, research* and *generic boilerplate* may be brought in.
-
-- ✅ These `docs/*.md` are notes/research — explicitly allowed.
-- ❌ No Genome/Drop/prompt code before 09:00. Repo is created **at kickoff**, commit #1 at ~09:40.
-- 🛡️ **Your defense is the git log.** Commit every 15–20 min. Push every time.
-- 📜 The project **must be open source** — MIT `LICENSE`, public repo.
-
----
-
-## ⚡ Before you leave the house (~60 min, zero code)
-
-| # | Task | Time | Doc |
-|---|------|------|-----|
-| 1 | **Get on Discord and DM 5 people.** Team reg closes 11:00 and there's little time on the day. | 15 min | [`05`](docs/05-PREFLIGHT-SETUP.md) |
-| 2 | Free accounts: Anthropic · fal · ElevenLabs · Firecrawl · n8n Cloud · Cursor · Vercel · GitHub · Loom/YouTube. **Credits are claimed on the portal at the event by the team lead.** | 20 min | [`05`](docs/05-PREFLIGHT-SETUP.md) |
-| 3 | Burner social accounts: **Bluesky app password** + **Telegram bot & channel**. Send one test post from each. | 20 min | [`08`](docs/08-PUBLISHING-REALITY.md) |
-| 4 | Record a **30s voice sample** (quiet room, phone memo, read naturally) → `voice-sample.m4a` | 3 min | [`06`](docs/06-SPONSOR-PLAYBOOK.md) |
-| 5 | Read the 2-min video script and the 5-slide structure **out loud** once | 10 min | [`03`](docs/03-DEMO-SCRIPT.md) · [`11`](docs/11-PITCH.md) |
-| 6 | Pack: laptop · charger · **HDMI/USB-C adapter** · water bottle · headphones · **snack (no dinner)** | 5 min | — |
-
----
-
-## ⚠️ Push constantly — two people + multiple agents, one repo
+## Run it
 
 ```bash
-git pull --rebase origin main   →   commit   →   push        # every 15 min, no exceptions
-npx tsc --noEmit                                            # clean before every push
+npm i
+cp .env.example .env.local     # every key is optional; see the table above for what each unlocks
+npm run dev                    # http://localhost:3000
 ```
 
-Unpushed work is invisible to your teammate and to every agent. Two agents that can't see each
-other's work will write the same file twice. Canonical rule: **`AGENTS.md`** (auto-read by every
-agent in this repo). Never force-push `main`. On a conflict, the other side's naming wins.
+Needs `ffmpeg` and `ffprobe` on the PATH (`brew install ffmpeg`). `GET /api/health` tells you
+whether it found them, and which keys are configured.
 
-## The 10 commandments
+With no keys at all, click **„gespeicherten Demo-Durchlauf laden"** on the landing page: the
+whole flow renders from `public/demo/`.
 
-1. **The 2-minute video is 100% of round 1.** Reserve 15:15–15:50 for it. Everyone else panic-records at 16:25.
-2. **Stop coding at 15:00.** Not 16:00. The submission takes 90 minutes to do properly.
-3. **Lock the team before 11:00.** Perks unlock only after the team is registered.
-4. **Build the demo backwards.** Make the final screen first; everything else serves it.
-5. **One gasp moment:** the judge's own brand, live, in a cloned voice.
-6. **Cache the golden path by 14:45, then test it with wifi OFF.** "Stable during the demo" is 25%.
-7. **Don't encode an mp4.** The vertical short is a DOM player — 40 lines, instant, can't fail. → [`01`](docs/01-THE-PRODUCT.md)
-8. **Touch all 5 sponsors** and ask each rep *"what wins your prize?"* Nobody else asks.
-9. **Be honest about API gates.** Bluesky/Telegram post for real; IG/TikTok/LinkedIn are queued. Say so.
-10. **Commit every 15 min, deploy every 20.** Your git log is both your alibi and your undo button.
+```bash
+docker build -t legacy-creator .    # bookworm-slim + ffmpeg + fonts; @napi-rs/canvas needs glibc
+```
 
----
+## Prove it works, without giving it a single API key
 
-## Docs index
+```bash
+npm run verify:render
+```
 
-| Doc | What it answers |
-|-----|-----------------|
-| [`00-WIN-CONDITIONS.md`](docs/00-WIN-CONDITIONS.md) | The real rubric, the two rounds, the pre-built rule, prize stacking |
-| [`01-THE-PRODUCT.md`](docs/01-THE-PRODUCT.md) | What we build, the ICP, P0/P1/cut, the DOM-player shortcut |
-| [`02-BATTLE-TIMELINE.md`](docs/02-BATTLE-TIMELINE.md) | Hour-by-hour against the real schedule |
-| [`03-DEMO-SCRIPT.md`](docs/03-DEMO-SCRIPT.md) | The 2-min video script **and** the live 3+2+2 |
-| [`04-ARCHITECTURE.md`](docs/04-ARCHITECTURE.md) | Laziest architecture that wins + what we don't build |
-| [`05-PREFLIGHT-SETUP.md`](docs/05-PREFLIGHT-SETUP.md) | **Exactly what we need.** Accounts, keys, portal perk flow, verification |
-| [`06-SPONSOR-PLAYBOOK.md`](docs/06-SPONSOR-PLAYBOOK.md) | Copy-paste code for all 5 APIs + prize hooks |
-| [`07-N8N-AUTOMATION.md`](docs/07-N8N-AUTOMATION.md) | The full social automation spine, node by node |
-| [`08-PUBLISHING-REALITY.md`](docs/08-PUBLISHING-REALITY.md) | Can we *really* post today? Per-platform truth table |
-| [`09-PROMPTS.md`](docs/09-PROMPTS.md) | The actual prompts + JSON schemas + the normalizer |
-| [`10-TEAM-LANES.md`](docs/10-TEAM-LANES.md) | Who does what at 2/3/4 people. Contracts first. |
-| [`11-PITCH.md`](docs/11-PITCH.md) | The prescribed 5 slides + 11 Q&A answers |
-| [`12-FALLBACKS.md`](docs/12-FALLBACKS.md) | 16 failure modes + escape hatches |
-| [`13-PLAN-B-IDEAS.md`](docs/13-PLAN-B-IDEAS.md) | 5 pivots + **the de-scope ladder** (the important part) |
-
-`scaffold.sh` — run at the venue, ~09:35. Generic deps + dirs + `.env.example` + `verify-keys.sh`. No features.
-
----
-
-## Status board (update in place, all day)
+Two seconds. It generates a 12-second clip, plans the cut, prints every removed span with its
+reason, prints the caption groups on the output timeline, encodes the mp4, and fails loudly if
+the output duration drifts more than 0.6s from the plan. This is the hard part of the product,
+and you can check it on your own machine before reading any of the code:
 
 ```
-[ ] 09:15  checked in on Luma · signed up on portal
-[ ] 09:40  repo created, public, MIT, commit #1 pushed
-[ ] 11:00  🔒 TEAM REGISTERED · perks claimed · keys AirDropped   team:
-[ ] 10:20  scope locked · types on paper · lanes assigned · alarms set
-[ ] 12:30  CHECKPOINT: end-to-end runs once (fake data OK)
-[ ] 12:30  sponsor reps asked: Cursor _ 11Labs _ fal _ n8n _ Firecrawl _
-[ ] 14:45  soft freeze · demo assets cached · wifi-off test PASSED
-[ ] 15:00  🎬 CODING STOPPED
-[ ] 15:50  2-min video recorded + uploaded + public
-[ ] 16:05  5-slide deck done + link-shared
-[ ] 16:15  every submission link opens in incognito
-[ ] 16:25  🔒 SUBMITTED
-[ ] 17:15  3 rehearsals done (pitch, demo, fallback)
+▸ cut plan: 3 keep spans, 4 cuts
+  12.00s → 4.52s (−7.48s)
+  ✂ 0.00–0.83  head
+  ✂ 2.47–6.03  filler "ähm"
+  ✂ 8.07–10.13  silence
+  ✂ 10.97–12.00  tail
+  ✓ 1080x1920 · 4.60s · 242 KB · 1.0s encode
+✓ Kette funktioniert. Drift 0.080s.
 ```
+
+The other check needs the dev server running:
+
+```bash
+npx tsx scripts/smoke.mts       # readiness, the three cached fixtures, both mp4s, publish lock
+```
+
+## Architecture
+
+One file per job. No framework beyond Next.js.
+
+| File | What it does |
+|---|---|
+| `lib/types.ts` | The contracts. `ShootBrief`, `Transcript`, `CutPlan`, `CaptionGroup`, `ProcessResult` |
+| `lib/brand.ts` | One URL → `BrandGenome`. Firecrawl scrapes the voice-carrying pages, Claude reverse-engineers voice, palette and verbatim phrases |
+| `lib/brief.ts` | Topic + brand context → `ShootBrief` via Claude |
+| `lib/transcribe.ts` | Audio → transcript with per-word start/end times (ElevenLabs Scribe) |
+| `lib/cut.ts` | Word timings → cut plan. Hesitations always go; discourse fillers are opt-in because they can be load-bearing. Also groups captions and maps them onto the output timeline |
+| `lib/caption-image.ts` | Draws each caption group as a transparent PNG |
+| `lib/render.ts` | `probe`, `extractAudio`, `renderVertical` — the ffmpeg layer |
+| `lib/storage.ts` | Puts the finished mp4 behind a public HTTPS URL, via Vercel Blob or a tunnel |
+| `lib/publish.ts` | Instagram Graph + Telegram, plus the publish gate and secret check |
+| `lib/fixtures.ts` | Contract-shaped fixtures so the UI runs with no keys |
+| `app/api/health` | Readiness. Fails if ffmpeg is missing, reports config without failing on it |
+| `scripts/verify-render.mts` | The proof above |
+| `scripts/seed-demo.mts` | Builds the cached demo path. `npm run seed:demo -- clip.mov` uses your footage |
+| `scripts/smoke.mts` | Asserts the cached path and the publish lock |
+
+## Licence
+
+MIT.
