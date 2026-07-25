@@ -13,8 +13,11 @@ import OpenAI from "openai";
  * lines come back using phrases the creator verifiably already uses.
  */
 
-// Overridable so credits can be traded for quality without a deploy.
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
+// Overridable so credits can be traded for quality without a deploy. Checked for
+// emptiness, not just for undefined: a declared-but-blank env var is the normal
+// state of an optional field in a deploy UI, and `??` would pass "" straight to
+// the API.
+const MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-5.6";
 
 /** Pages that carry voice, as opposed to nav and legal boilerplate. */
 const VOICEY =

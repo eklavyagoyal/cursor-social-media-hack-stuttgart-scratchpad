@@ -1,8 +1,11 @@
 import OpenAI from "openai";
 import type { ShootBrief, Shot } from "./types";
 
-// Overridable so credits can be traded for quality without a deploy.
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.6";
+// Overridable so credits can be traded for quality without a deploy. Checked for
+// emptiness, not just for undefined: a declared-but-blank env var is the normal
+// state of an optional field in a deploy UI, and `??` would pass "" straight to
+// the API.
+const MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-5.6";
 
 const SHOT_SCHEMA = {
   type: "object",
