@@ -8,22 +8,21 @@ export function GenomeCard({ genome }: { genome: BrandGenome }) {
 
   return (
     <div className="animate-rise">
-      {/* Identity */}
-      <header className="flex items-end justify-between gap-10">
+      <header className="flex flex-wrap items-end justify-between gap-8">
         <div>
-          <Label className="mb-5">brand genome · {genome.sourceUrl.replace(/^https?:\/\//, "")}</Label>
-          <h1 className="font-serif text-7xl leading-[0.95] tracking-tight text-ash-100">
-            {genome.name}
-          </h1>
+          <Label className="mb-4">
+            Marken-Profil · {genome.sourceUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+          </Label>
+          <h3 className="display text-5xl leading-[0.95] sm:text-6xl">{genome.name}</h3>
           {genome.tagline && (
-            <p className="mt-4 max-w-xl font-serif text-2xl italic leading-snug text-ash-300">
+            <p className="mt-3 max-w-xl font-serif text-2xl italic leading-snug text-muted">
               {genome.tagline}
             </p>
           )}
         </div>
-        <div className="hidden shrink-0 text-right md:block">
-          <Label className="mb-3">voice</Label>
-          <div className="font-serif text-3xl leading-tight text-ash-100">
+        <div className="shrink-0 text-right">
+          <Label className="mb-2">Tonalität</Label>
+          <div className="font-serif text-[28px] leading-tight">
             {voice.adjectives.map((a, i) => (
               <div key={i}>{a}</div>
             ))}
@@ -31,57 +30,56 @@ export function GenomeCard({ genome }: { genome: BrandGenome }) {
         </div>
       </header>
 
-      {/* Pet phrases — the hero. Verbatim from their own site. */}
-      <Section label={`${voice.petPhrases.length} pet phrases · verbatim`} className="mt-14">
-        <div className="grid gap-px bg-white/[0.07] md:grid-cols-2">
+      {/* The verbatim phrases are the proof that we read the site rather than
+          guessed at it — so they get the most space on the card. */}
+      <Section label={`${voice.petPhrases.length} Formulierungen · wörtlich von der Seite`} className="mt-12">
+        <div className="grid gap-px bg-border sm:grid-cols-2">
           {voice.petPhrases.map((p, i) => (
             <blockquote
               key={i}
-              className="group relative bg-background px-8 py-7 transition-colors duration-200 hover:bg-ash-800"
+              className="relative bg-surface px-7 py-6 transition-colors duration-200 hover:bg-surface-2"
             >
               <span
-                className="pointer-events-none absolute left-2 top-1 select-none font-serif text-6xl leading-none text-brand opacity-30"
+                className="pointer-events-none absolute left-1.5 top-0 select-none font-serif text-5xl leading-none text-accent opacity-40"
                 aria-hidden
               >
                 &ldquo;
               </span>
-              <p className="relative font-serif text-[22px] leading-snug text-[#E8DCC8]">{p}</p>
+              <p className="relative font-serif text-[21px] leading-snug text-foreground">{p}</p>
             </blockquote>
           ))}
         </div>
       </Section>
 
-      {/* Palette */}
-      <Section label="palette" className="mt-12">
-        <div className="grid grid-cols-5 gap-4">
-          {look.palette.map((hex) => (
-            <div key={hex}>
-              <div className="h-28 w-full" style={{ background: hex }} />
-              <div className="mt-3 font-mono text-xs uppercase tracking-widest text-ash-300">
+      <Section label="Palette" className="mt-10">
+        <div className="grid grid-cols-5 gap-3">
+          {look.palette.map((hex, i) => (
+            <div key={`${hex}-${i}`}>
+              <div className="h-24 w-full rounded-md" style={{ background: hex }} />
+              <div className="mt-2 font-mono text-[11px] uppercase tracking-widest text-muted">
                 {hex}
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-6 grid gap-6 text-[15px] leading-relaxed text-ash-300 md:grid-cols-2">
+        <div className="mt-5 grid gap-4 text-[14px] leading-relaxed text-muted sm:grid-cols-2">
           <p>
-            <span className="text-ash-400">Type · </span>
+            <span className="text-foreground/60">Typo · </span>
             {look.typographyVibe}
           </p>
           <p>
-            <span className="text-ash-400">Imagery · </span>
+            <span className="text-foreground/60">Bildsprache · </span>
             {look.imageryStyle}
           </p>
         </div>
       </Section>
 
-      {/* Substance */}
-      <div className="grid gap-12 md:grid-cols-2">
-        <Section label={`${substance.pillars.length} pillars`} className="mt-12">
-          <ol className="space-y-3">
+      <div className="grid gap-x-12 sm:grid-cols-2">
+        <Section label={`${substance.pillars.length} Themenfelder`} className="mt-10">
+          <ol className="space-y-2.5">
             {substance.pillars.map((p, i) => (
-              <li key={i} className="flex gap-5 text-[19px] leading-snug text-ash-100">
-                <span className="font-mono text-xs text-ash-400 pt-2">
+              <li key={i} className="flex gap-4 text-[17px] leading-snug">
+                <span className="pt-1.5 font-mono text-[11px] text-muted">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span>{p}</span>
@@ -90,15 +88,15 @@ export function GenomeCard({ genome }: { genome: BrandGenome }) {
           </ol>
         </Section>
 
-        <div className="mt-12">
-          <Section label="who they talk to">
-            <p className="text-[19px] leading-relaxed text-ash-100">{substance.icp}</p>
+        <div>
+          <Section label="Zielperson" className="mt-10">
+            <p className="text-[17px] leading-relaxed">{substance.icp}</p>
           </Section>
-          <Section label="proof" className="mt-10">
-            <ul className="space-y-4">
+          <Section label="Belege" className="mt-8">
+            <ul className="space-y-3">
               {substance.proofPoints.map((p, i) => (
-                <li key={i} className="flex gap-4 text-[16px] leading-relaxed text-ash-200">
-                  <span className="text-brand">—</span>
+                <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-foreground/85">
+                  <span className="text-accent">—</span>
                   <span>{p}</span>
                 </li>
               ))}
@@ -107,27 +105,25 @@ export function GenomeCard({ genome }: { genome: BrandGenome }) {
         </div>
       </div>
 
-      {/* Hooks */}
-      <Section label={`${genome.hooks.length} hook patterns`} className="mt-12">
-        <div className="space-y-4">
+      <Section label={`${genome.hooks.length} Hook-Muster`} className="mt-10">
+        <div className="space-y-3">
           {genome.hooks.map((h, i) => (
-            <div key={i} className="font-mono text-[15px] leading-relaxed text-ash-200">
+            <div key={i} className="font-mono text-[14px] leading-relaxed text-foreground/85">
               <Templated text={h} />
             </div>
           ))}
         </div>
       </Section>
 
-      {/* Guardrails */}
-      <Section label="guardrails" className="mt-12">
-        <div className="grid gap-8 md:grid-cols-2">
+      <Section label="Leitplanken" className="mt-10">
+        <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <p className="mb-3 text-sm text-ash-400">never says</p>
-            <div className="flex flex-wrap gap-2">
-              {voice.forbidden.map((w) => (
+            <p className="mb-2.5 text-[13px] text-muted">sagt nie</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+              {voice.forbidden.map((w, i) => (
                 <span
-                  key={w}
-                  className="font-mono text-[13px] text-ash-300 line-through decoration-brand/70"
+                  key={`${w}-${i}`}
+                  className="font-mono text-[13px] text-muted line-through decoration-accent/70"
                 >
                   {w}
                 </span>
@@ -135,10 +131,8 @@ export function GenomeCard({ genome }: { genome: BrandGenome }) {
             </div>
           </div>
           <div>
-            <p className="mb-3 text-sm text-ash-400">
-              sentence style · emoji: {voice.emojiPolicy}
-            </p>
-            <p className="text-[15px] leading-relaxed text-ash-200">{voice.sentenceStyle}</p>
+            <p className="mb-2.5 text-[13px] text-muted">Satzbau · Emojis: {voice.emojiPolicy}</p>
+            <p className="text-[14px] leading-relaxed text-foreground/85">{voice.sentenceStyle}</p>
           </div>
         </div>
       </Section>

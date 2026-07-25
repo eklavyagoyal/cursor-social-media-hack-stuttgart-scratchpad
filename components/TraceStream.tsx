@@ -5,10 +5,10 @@ import { useEffect, useRef } from "react";
 export type TraceLine = { kind: "step" | "ok" | "warn" | "error"; msg: string };
 
 const TONE: Record<TraceLine["kind"], string> = {
-  step: "text-ash-300",
-  ok: "text-ash-100",
-  warn: "text-[#E8DCC8]",
-  error: "text-brand",
+  step: "text-muted",
+  ok: "text-foreground",
+  warn: "text-accent",
+  error: "text-red-300",
 };
 
 /**
@@ -22,17 +22,20 @@ export function TraceStream({ lines, running }: { lines: TraceLine[]; running: b
   }, [lines.length]);
 
   return (
-    <div className="font-mono text-[17px] leading-[2.1] tracking-tight">
+    <div className="font-mono text-[15px] leading-[1.95] tracking-tight sm:text-[16px]">
       {lines.map((l, i) => {
         const pending = running && i === lines.length - 1;
         const mark = pending ? "◐" : l.kind === "warn" ? "!" : l.kind === "error" ? "×" : "✓";
+        const markTone = pending
+          ? "animate-pulse-soft text-accent"
+          : l.kind === "error"
+            ? "text-red-300"
+            : l.kind === "warn"
+              ? "text-accent"
+              : "text-live";
         return (
           <div key={i} className={`flex gap-4 animate-land ${TONE[l.kind]}`}>
-            <span
-              className={`w-4 shrink-0 ${pending ? "animate-pulse-soft text-brand" : l.kind === "error" ? "text-brand" : "text-ash-400"}`}
-            >
-              {mark}
-            </span>
+            <span className={`w-4 shrink-0 ${markTone}`}>{mark}</span>
             <span>{l.msg}</span>
           </div>
         );

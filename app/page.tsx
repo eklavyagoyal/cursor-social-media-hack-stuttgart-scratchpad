@@ -3,13 +3,25 @@
 import { useRef, useState } from "react";
 import { BriefPanel } from "@/components/BriefPanel";
 import { CutTimeline } from "@/components/CutTimeline";
+import { GenomeCard } from "@/components/GenomeCard";
 import { ReelPreview } from "@/components/ReelPreview";
 import { ShipPanel } from "@/components/ShipPanel";
+import { TraceStream } from "@/components/TraceStream";
+import { useTrace } from "@/components/useTrace";
+import type { BrandGenome } from "@/lib/brand";
 import type { ProcessResult, PublishResult, ShootBrief } from "@/lib/types";
 
 type Phase = "idle" | "running" | "done" | "error";
 
+const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`;
+
 export default function Home() {
+  const [url, setUrl] = useState("");
+  const [genome, setGenome] = useState<BrandGenome | null>(null);
+  const [brandPhase, setBrandPhase] = useState<Phase>("idle");
+  const [brandSkipped, setBrandSkipped] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
   const [topic, setTopic] = useState("");
   const [brief, setBrief] = useState<ShootBrief | null>(null);
   const [briefPhase, setBriefPhase] = useState<Phase>("idle");
@@ -26,22 +38,102 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
+  const brandTrace = useTrace();
+  const briefTrace = useTrace();
+  const processTrace = useTrace();
+
+  /** Brand step resolved one way or another — the topic input is live. */
+  const briefUnlocked = Boolean(genome) || brandSkipped;
+
+  function applyGenome(g: BrandGenome) {
+    setGenome(g);
+    setBrandPhase("done");
+    brandTrace.finish(
+      `Stimme: ${g.voice.adjectives.join(" · ")}`,
+      `${g.voice.petPhrases.length} Formulierungen wörtlich übernommen`,
+      `Palette: ${g.look.palette.slice(0, 3).join("  ")}`,
+    );
+  }
+
+  async function cachedGenome(): Promise<BrandGenome> {
+    const res = await fetch("/demo/genome.json");
+    if (!res.ok) throw new Error("Kein gespeichertes Marken-Profil vorhanden.");
+    return (await res.json()) as BrandGenome;
+  }
+
   /** The cached path — works with no keys and no network. */
   async function loadDemo() {
     setError(null);
+    setNotice(null);
     try {
-      const [b, r] = await Promise.all([
+      const [g, b, r] = await Promise.all([
+        fetch("/demo/genome.json").then((res) => (res.ok ? res.json() : null)),
         fetch("/demo/brief.json").then((res) => res.json()),
         fetch("/demo/result.json").then((res) => res.json()),
       ]);
+      if (g) {
+        setGenome(g);
+        setUrl(g.sourceUrl ?? "");
+        setBrandPhase("done");
+        brandTrace.reset();
+      } else {
+        setBrandSkipped(true);
+      }
       setBrief(b);
       setTopic(b.topic);
       setCaption(`${b.caption}\n\n${b.hashtags.join(" ")}`);
       setBriefPhase("done");
+      briefTrace.reset();
       setResult(r);
       setProcessPhase("done");
+      processTrace.reset();
     } catch {
       setError("Kein Demo-Pfad vorhanden. Einmal `npm run seed:demo` laufen lassen.");
+    }
+  }
+
+  async function readBrand() {
+    if (!url.trim()) return;
+    setBrandPhase("running");
+    setError(null);
+    setNotice(null);
+    brandTrace.start([
+      { after: 0, kind: "step", msg: "Marken-Oberfläche lesen" },
+      { after: 1400, kind: "ok", msg: "Startseite gelesen" },
+      { after: 3200, kind: "ok", msg: "Unterseiten mit Tonalität gefunden" },
+      { after: 4600, kind: "step", msg: "Tonalität extrahieren" },
+      { after: 9000, kind: "step", msg: "Formulierungen wörtlich sammeln" },
+      { after: 16000, kind: "step", msg: "Hook-Muster ableiten" },
+    ]);
+
+    try {
+      const res = await fetch("/api/brand", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        // 422 + thin: a JS-only or blocking site. Expected, not a crash.
+        if (json.thin) {
+          brandTrace.warn("Seite liefert kaum lesbaren Text — gespeichertes Profil geladen");
+          const g = await cachedGenome();
+          setNotice(
+            "Die Seite rendert erst im Browser, da kommt beim Lesen fast nichts an. Wir arbeiten mit dem gespeicherten Marken-Profil weiter.",
+          );
+          applyGenome(g);
+          return;
+        }
+        throw new Error(json.error ?? "Marke lesen fehlgeschlagen.");
+      }
+
+      applyGenome(json.genome as BrandGenome);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      brandTrace.fail(msg);
+      setError(`${msg} — du kannst den Schritt überspringen und nur mit dem Thema weitermachen.`);
+      setBrandPhase("error");
     }
   }
 
@@ -49,19 +141,36 @@ export default function Home() {
     if (!topic.trim()) return;
     setBriefPhase("running");
     setError(null);
+    briefTrace.start([
+      { after: 0, kind: "step", msg: "Thema schärfen" },
+      ...(genome
+        ? ([{ after: 900, kind: "ok", msg: `Grundierung: ${genome.name}` }] as const)
+        : []),
+      { after: 2000, kind: "step", msg: "Hook schreiben" },
+      { after: 5000, kind: "step", msg: "Shots und Kameraführung" },
+      { after: 9000, kind: "step", msg: "Caption und Hashtags" },
+    ]);
     try {
       const res = await fetch("/api/brief", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ topic }),
+        // Verbatim — the grounding block is pre-rendered by lib/brand.ts.
+        body: JSON.stringify({ topic, context: genome?.context }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Briefing fehlgeschlagen.");
-      setBrief(json.brief);
-      setCaption(`${json.brief.caption}\n\n${json.brief.hashtags.join(" ")}`);
+      const b = json.brief as ShootBrief;
+      setBrief(b);
+      setCaption(`${b.caption}\n\n${b.hashtags.join(" ")}`);
       setBriefPhase("done");
+      briefTrace.finish(
+        `${b.shots.length} Shots · ${b.totalSeconds}s`,
+        `Caption + ${b.hashtags.length} Hashtags`,
+      );
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      briefTrace.fail(msg);
+      setError(msg);
       setBriefPhase("error");
     }
   }
@@ -71,6 +180,14 @@ export default function Home() {
     setError(null);
     setResult(null);
     setPublishResults([]);
+    processTrace.start([
+      { after: 0, kind: "ok", msg: `${file.name} · ${mb(file.size)}` },
+      { after: 600, kind: "step", msg: "Ton extrahieren" },
+      { after: 3000, kind: "step", msg: "transkribieren, mit Wort-Timings" },
+      { after: 12000, kind: "step", msg: "Stille und Füllwörter suchen" },
+      { after: 18000, kind: "step", msg: "Untertitel gruppieren" },
+      { after: 24000, kind: "step", msg: "mp4 rendern, Untertitel einbrennen" },
+    ]);
     try {
       const form = new FormData();
       form.append("video", file);
@@ -79,10 +196,18 @@ export default function Home() {
       const res = await fetch("/api/process", { method: "POST", body: form });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Verarbeitung fehlgeschlagen.");
-      setResult(json);
+      const r = json as ProcessResult;
+      setResult(r);
       setProcessPhase("done");
+      processTrace.finish(
+        `${r.plan.removedSeconds.toFixed(1)}s raus · ${r.plan.outDuration.toFixed(1)}s Endlänge`,
+        `${r.captions.length} Untertitel-Gruppen`,
+        `mp4 ${r.render.width}×${r.render.height} · ${mb(r.render.sizeBytes)}`,
+      );
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      processTrace.fail(msg);
+      setError(msg);
       setProcessPhase("error");
     }
   }
@@ -112,7 +237,7 @@ export default function Home() {
     <main className="mx-auto w-full max-w-5xl px-6 py-14 sm:px-8">
       <header className="border-b border-border pb-10">
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
-          Vorgabe → Dreh → Post
+          Marke → Vorgabe → Dreh → Post
         </p>
         <h1 className="display mt-3 text-4xl leading-[1.1] sm:text-5xl">
           Du filmst 30 Sekunden.
@@ -120,9 +245,9 @@ export default function Home() {
           <span className="text-muted">Den Rest macht die Maschine.</span>
         </h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">
-          Sag ein Thema, du bekommst ein Drehbuch mit Kameraanweisungen. Film es mit dem Handy,
-          lad es hoch — Stillen und Füllwörter fliegen raus, Untertitel werden eingebrannt,
-          und der Reel geht auf den Business-Account.
+          Ein Link genügt: wir lesen, wie deine Marke wirklich klingt. Daraus wird ein Drehbuch mit
+          Kameraanweisungen. Film es mit dem Handy, lad es hoch — Stillen und Füllwörter fliegen
+          raus, Untertitel werden eingebrannt, und der Reel geht auf den Business-Account.
         </p>
         <button
           type="button"
@@ -139,151 +264,228 @@ export default function Home() {
         </div>
       )}
 
-      <Step n={1} title="Vorgabe" hint="Was soll rein? Claude macht daraus ein Drehbuch.">
+      <Step
+        n={1}
+        title="Marke"
+        hint="Eine URL. Wir lesen die Seite und ziehen raus, wie ihr klingt — Tonalität, eigene Formulierungen, Farben."
+      >
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && makeBrief()}
-            placeholder="z.B. Warum unsere Espressomischung dreimal geröstet wird"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && readBrand()}
+            placeholder="legacy-ai.de"
+            spellCheck={false}
             className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-[15px] outline-none placeholder:text-muted/70 focus:border-accent/60"
           />
           <button
             type="button"
-            onClick={makeBrief}
-            disabled={briefPhase === "running" || !topic.trim()}
+            onClick={readBrand}
+            disabled={brandPhase === "running" || !url.trim()}
             className="rounded-xl bg-accent px-6 py-3 text-[15px] font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-40"
           >
-            {briefPhase === "running" ? "denkt nach…" : "Drehbuch bauen"}
+            {brandPhase === "running" ? "liest…" : "Marke lesen"}
           </button>
         </div>
 
-        {brief && (
-          <div className="mt-8">
-            <BriefPanel brief={brief} />
+        {!briefUnlocked && brandPhase !== "running" && (
+          <button
+            type="button"
+            onClick={() => setBrandSkipped(true)}
+            className="mt-4 font-mono text-[11px] text-muted underline decoration-dotted underline-offset-4 hover:text-foreground"
+          >
+            überspringen, nur mit einem Thema arbeiten
+          </button>
+        )}
+
+        {brandTrace.lines.length > 0 && (
+          <div className="mt-6">
+            <TraceStream lines={brandTrace.lines} running={brandPhase === "running"} />
+          </div>
+        )}
+
+        {notice && (
+          <p className="mt-5 max-w-2xl border-l-2 border-accent/50 pl-4 text-[13px] leading-relaxed text-muted">
+            {notice}
+          </p>
+        )}
+
+        {genome && (
+          <div className="mt-10">
+            <GenomeCard genome={genome} />
           </div>
         )}
       </Step>
 
-      <Step
-        n={2}
-        title="Dreh & Upload"
-        hint="Handy, vertikal, einmal durchsprechen. Fehler sind egal — die schneidet er raus."
-      >
-        <label className="flex cursor-pointer items-center gap-3 font-mono text-[12px] text-muted">
-          <input
-            type="checkbox"
-            checked={aggressive}
-            onChange={(e) => setAggressive(e.target.checked)}
-            className="h-4 w-4 accent-[var(--color-accent)]"
-          />
-          Auch Diskursfüller schneiden („also“, „quasi“, „irgendwie“) — schärfer, aber riskanter
-        </label>
-
-        <div className="mt-4 flex flex-wrap items-center gap-4">
-          <input
-            ref={fileInput}
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void processVideo(f);
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => fileInput.current?.click()}
-            disabled={processPhase === "running"}
-            className="rounded-xl border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60 disabled:opacity-40"
+      {briefUnlocked && (
+        <div className="animate-rise">
+          <Step
+            n={2}
+            title="Vorgabe"
+            hint={
+              genome
+                ? `Was soll rein? Claude schreibt das Drehbuch in der Tonalität von ${genome.name}.`
+                : "Was soll rein? Claude macht daraus ein Drehbuch."
+            }
           >
-            {processPhase === "running" ? "verarbeitet…" : "Rohvideo auswählen"}
-          </button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && makeBrief()}
+                placeholder="z.B. Warum unsere Espressomischung dreimal geröstet wird"
+                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-[15px] outline-none placeholder:text-muted/70 focus:border-accent/60"
+              />
+              <button
+                type="button"
+                onClick={makeBrief}
+                disabled={briefPhase === "running" || !topic.trim()}
+                className="rounded-xl bg-accent px-6 py-3 text-[15px] font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {briefPhase === "running" ? "denkt nach…" : "Drehbuch bauen"}
+              </button>
+            </div>
 
-          {processPhase === "running" && (
-            <p className="font-mono text-[12px] text-muted">
-              Ton extrahieren → transkribieren → Schnitt planen → rendern. Dauert etwa so lang wie
-              der Clip.
-            </p>
-          )}
-        </div>
-      </Step>
+            {briefTrace.lines.length > 0 && (
+              <div className="mt-6">
+                <TraceStream lines={briefTrace.lines} running={briefPhase === "running"} />
+              </div>
+            )}
 
-      <Step n={3} title="Schnitt & Untertitel" hint="Vorschau läuft ohne Rendern — das mp4 liegt daneben.">
-        {!result ? (
-          <p className="font-mono text-[12px] text-muted">Noch kein Clip verarbeitet.</p>
-        ) : (
-          <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
-            <ReelPreview
-              rawUrl={result.rawUrl}
-              plan={result.plan}
-              captions={result.captions}
+            {brief && (
+              <div className="mt-8">
+                <BriefPanel brief={brief} />
+              </div>
+            )}
+          </Step>
+
+          <Step
+            n={3}
+            title="Dreh & Upload"
+            hint="Handy, vertikal, einmal durchsprechen. Fehler sind egal — die schneidet er raus."
+          >
+            <label className="flex cursor-pointer items-center gap-3 font-mono text-[12px] text-muted">
+              <input
+                type="checkbox"
+                checked={aggressive}
+                onChange={(e) => setAggressive(e.target.checked)}
+                className="h-4 w-4 accent-[var(--color-accent)]"
+              />
+              Auch Diskursfüller schneiden („also“, „quasi“, „irgendwie“) — schärfer, aber riskanter
+            </label>
+
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <input
+                ref={fileInput}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void processVideo(f);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+                disabled={processPhase === "running"}
+                className="rounded-xl border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60 disabled:opacity-40"
+              >
+                {processPhase === "running" ? "verarbeitet…" : "Rohvideo auswählen"}
+              </button>
+
+              {processPhase === "running" && (
+                <p className="font-mono text-[12px] text-muted">
+                  Dauert etwa so lang wie der Clip.
+                </p>
+              )}
+            </div>
+
+            {processTrace.lines.length > 0 && (
+              <div className="mt-6">
+                <TraceStream lines={processTrace.lines} running={processPhase === "running"} />
+              </div>
+            )}
+          </Step>
+
+          <Step
+            n={4}
+            title="Schnitt & Untertitel"
+            hint="Vorschau läuft ohne Rendern — das mp4 liegt daneben."
+          >
+            {!result ? (
+              <p className="font-mono text-[12px] text-muted">Noch kein Clip verarbeitet.</p>
+            ) : (
+              <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+                <ReelPreview rawUrl={result.rawUrl} plan={result.plan} captions={result.captions} />
+
+                <div className="space-y-6">
+                  <CutTimeline plan={result.plan} />
+
+                  <div className="grid grid-cols-2 gap-3 font-mono text-[11px] sm:grid-cols-4">
+                    <Stat label="Quelle" value={`${result.source.width}×${result.source.height}`} />
+                    <Stat label="Export" value={`${result.render.width}×${result.render.height}`} />
+                    <Stat label="Untertitel" value={`${result.captions.length} Gruppen`} />
+                    <Stat label="Dateigröße" value={mb(result.render.sizeBytes)} />
+                  </div>
+
+                  <div>
+                    <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
+                      Transkript · {result.transcript.languageCode}
+                    </p>
+                    <p className="mt-2 max-h-28 overflow-y-auto text-[14px] leading-relaxed text-foreground/80">
+                      {result.transcript.text || "—"}
+                    </p>
+                  </div>
+
+                  <a
+                    href={result.render.publicUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block font-mono text-[12px] text-foreground underline decoration-dotted underline-offset-4 hover:text-accent"
+                  >
+                    gerendertes mp4 öffnen ↗
+                  </a>
+                </div>
+              </div>
+            )}
+          </Step>
+
+          <Step
+            n={5}
+            title="Posten"
+            hint="Instagram holt die Datei selbst ab, deshalb geht sie vorher öffentlich online."
+          >
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={4}
+              placeholder="Caption — erste Zeile muss vor dem „mehr“ funktionieren."
+              className="w-full resize-y rounded-xl border border-border bg-surface px-4 py-3 text-[14px] leading-relaxed outline-none placeholder:text-muted/70 focus:border-accent/60"
             />
 
-            <div className="space-y-6">
-              <CutTimeline plan={result.plan} />
-
-              <div className="grid grid-cols-2 gap-3 font-mono text-[11px] sm:grid-cols-4">
-                <Stat label="Quelle" value={`${result.source.width}×${result.source.height}`} />
-                <Stat label="Export" value={`${result.render.width}×${result.render.height}`} />
-                <Stat label="Untertitel" value={`${result.captions.length} Gruppen`} />
-                <Stat
-                  label="Dateigröße"
-                  value={`${(result.render.sizeBytes / 1_048_576).toFixed(1)} MB`}
-                />
-              </div>
-
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
-                  Transkript · {result.transcript.languageCode}
-                </p>
-                <p className="mt-2 max-h-28 overflow-y-auto text-[14px] leading-relaxed text-foreground/80">
-                  {result.transcript.text || "—"}
-                </p>
-              </div>
-
-              <a
-                href={result.render.publicUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block font-mono text-[12px] text-foreground underline decoration-dotted underline-offset-4 hover:text-accent"
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={publish}
+                disabled={!result || publishPhase === "running"}
+                className="rounded-xl bg-live px-6 py-3 text-[15px] font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-40"
               >
-                gerendertes mp4 öffnen ↗
-              </a>
+                {publishPhase === "running" ? "lädt hoch…" : "Auf Instagram posten"}
+              </button>
+              <p className="font-mono text-[11px] text-muted">
+                Sicherheitsschalter: PUBLISH_ENABLED in .env.local
+              </p>
             </div>
-          </div>
-        )}
-      </Step>
 
-      <Step n={4} title="Posten" hint="Instagram holt die Datei selbst ab, deshalb geht sie vorher öffentlich online.">
-        <textarea
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          rows={4}
-          placeholder="Caption — erste Zeile muss vor dem „mehr“ funktionieren."
-          className="w-full resize-y rounded-xl border border-border bg-surface px-4 py-3 text-[14px] leading-relaxed outline-none placeholder:text-muted/70 focus:border-accent/60"
-        />
-
-        <div className="mt-4 flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            onClick={publish}
-            disabled={!result || publishPhase === "running"}
-            className="rounded-xl bg-live px-6 py-3 text-[15px] font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {publishPhase === "running" ? "lädt hoch…" : "Auf Instagram posten"}
-          </button>
-          <p className="font-mono text-[11px] text-muted">
-            Sicherheitsschalter: PUBLISH_ENABLED in .env.local
-          </p>
+            {publishResults.length > 0 && (
+              <div className="mt-6">
+                <ShipPanel results={publishResults} publicUrl={publicUrl} />
+              </div>
+            )}
+          </Step>
         </div>
-
-        {publishResults.length > 0 && (
-          <div className="mt-6">
-            <ShipPanel results={publishResults} publicUrl={publicUrl} />
-          </div>
-        )}
-      </Step>
+      )}
     </main>
   );
 }

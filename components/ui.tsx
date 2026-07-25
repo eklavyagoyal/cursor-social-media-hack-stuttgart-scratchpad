@@ -3,14 +3,13 @@ import type { ReactNode } from "react";
 /** Small mono caps label. The only "chrome" in the app. */
 export function Label({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={`font-mono text-[11px] uppercase tracking-[0.22em] text-ash-400 ${className}`}
-    >
+    <div className={`font-mono text-[11px] uppercase tracking-[0.22em] text-muted ${className}`}>
       {children}
     </div>
   );
 }
 
+/** A hairline rule and a label — hierarchy without boxing everything in. */
 export function Section({
   label,
   children,
@@ -22,8 +21,8 @@ export function Section({
 }) {
   return (
     <section className={className}>
-      <div className="rule mb-6 pt-6">
-        <Label className="pt-5">{label}</Label>
+      <div className="rule mb-5 pt-4">
+        <Label>{label}</Label>
       </div>
       {children}
     </section>
@@ -36,12 +35,16 @@ export function Templated({ text }: { text: string }) {
     <>
       {text.split(/(\{[^}]+\})/g).map((part, i) =>
         part.startsWith("{") && part.endsWith("}") ? (
-          <span key={i} className="text-brand" style={{ background: "rgba(193,68,14,0.12)" }}>
+          <span
+            key={i}
+            className="rounded-sm px-1 text-accent"
+            style={{ background: "color-mix(in oklab, var(--accent) 14%, transparent)" }}
+          >
             {part}
           </span>
         ) : (
           <span key={i}>{part}</span>
-        )
+        ),
       )}
     </>
   );

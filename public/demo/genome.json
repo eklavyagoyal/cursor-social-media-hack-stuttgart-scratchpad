@@ -1,0 +1,68 @@
+{
+  "sourceUrl": "https://roestwerk-sued.de",
+  "name": "Röstwerk Süd",
+  "tagline": "Dreimal rösten. Einmal mischen.",
+  "voice": {
+    "adjectives": [
+      "direkt",
+      "trocken",
+      "unangeberisch"
+    ],
+    "petPhrases": [
+      "Die meisten rösten einmal. Wir dreimal.",
+      "Das ist eigentlich Faulheit — nur andersrum.",
+      "Jede Sorte kriegt ihre eigene Kurve.",
+      "Gemischt wird erst danach.",
+      "Dauert länger, kostet mehr Gas.",
+      "Schmeckt auch durch Milch durch.",
+      "Probier's, und wenn du keinen Unterschied merkst, sag's mir ehrlich.",
+      "Originalton — das Trommelgeräusch ist das halbe Video."
+    ],
+    "forbidden": [
+      "Kaffeegenuss",
+      "Genussmoment",
+      "handverlesen",
+      "Premium",
+      "einzigartig",
+      "Geschmackserlebnis",
+      "revolutionär"
+    ],
+    "sentenceStyle": "Kurze Hauptsätze. Zahl statt Adjektiv. Oft ein Widerspruch im ersten Satz, aufgelöst im zweiten. Duzt konsequent, gibt Nachteile zuerst zu.",
+    "emojiPolicy": "sparing"
+  },
+  "look": {
+    "palette": [
+      "#1A120B",
+      "#E8DCC8",
+      "#C1440E",
+      "#5C4033",
+      "#F5F1E8"
+    ],
+    "typographyVibe": "Schmale Grotesk in Versalien auf den Tüten, sonst Serife im Fließtext. Viel Weißraum, kaum Rahmen.",
+    "imageryStyle": "Werkstattfotos bei Kunstlicht: Trommel, Hände, Bohnen im Halbschatten. Kein Latte-Art-Stock."
+  },
+  "substance": {
+    "pillars": [
+      "Getrennte Röstkurven pro Sorte",
+      "Warum erst nach dem Rösten gemischt wird",
+      "Espresso, der durch Milch durchkommt",
+      "Direktbezug und was er wirklich kostet",
+      "Mahlgrad und Wasser zu Hause",
+      "Handwerk ohne Küchenlatein"
+    ],
+    "icp": "Der Gastronom oder Vielkoch, der schon guten Kaffee kauft und sich trotzdem fragt, warum der Espresso zu Hause nach nichts schmeckt.",
+    "proofPoints": [
+      "Drei getrennte Röstkurven pro Blend, gemischt wird erst danach",
+      "Dreifacher Gasverbrauch gegenüber einem einzelnen Durchgang",
+      "Trommelröstung in Stuttgart, keine Heißluft"
+    ]
+  },
+  "hooks": [
+    "Die meisten {branche} machen {üblicher_weg}. Wir {abweichung} — und das hat einen unangenehmen Grund.",
+    "{zahl}× {vorgang} klingt nach Angeberei. Ist aber nur die Konsequenz aus {problem}.",
+    "Dauert länger, kostet mehr {ressource}. Dafür {ergebnis}.",
+    "Probier's, und wenn du {kein_unterschied} merkst, sag's mir ehrlich.",
+    "Das ist eigentlich {vorwurf} — nur andersrum."
+  ],
+  "context": "Marke: Röstwerk Süd — Dreimal rösten. Einmal mischen.\nTonalität: direkt, trocken, unangeberisch\nSatzbau: Kurze Hauptsätze. Zahl statt Adjektiv. Oft ein Widerspruch im ersten Satz, aufgelöst im zweiten. Duzt konsequent, gibt Nachteile zuerst zu.\nEmojis: sparing\nZielperson: Der Gastronom oder Vielkoch, der schon guten Kaffee kauft und sich trotzdem fragt, warum der Espresso zu Hause nach nichts schmeckt.\nFormulierungen, die die Marke wirklich benutzt — übernimm davon, wo es passt:\n- \"Die meisten rösten einmal. Wir dreimal.\"\n- \"Das ist eigentlich Faulheit — nur andersrum.\"\n- \"Jede Sorte kriegt ihre eigene Kurve.\"\n- \"Gemischt wird erst danach.\"\n- \"Dauert länger, kostet mehr Gas.\"\n- \"Schmeckt auch durch Milch durch.\"\n- \"Probier's, und wenn du keinen Unterschied merkst, sag's mir ehrlich.\"\n- \"Originalton — das Trommelgeräusch ist das halbe Video.\"\nWörter, die NIE vorkommen dürfen: Kaffeegenuss, Genussmoment, handverlesen, Premium, einzigartig, Geschmackserlebnis, revolutionär\nBelegbare Fakten, nichts dazuerfinden: Drei getrennte Röstkurven pro Blend, gemischt wird erst danach · Dreifacher Gasverbrauch gegenüber einem einzelnen Durchgang · Trommelröstung in Stuttgart, keine Heißluft\nThemenfelder: Getrennte Röstkurven pro Sorte · Warum erst nach dem Rösten gemischt wird · Espresso, der durch Milch durchkommt · Direktbezug und was er wirklich kostet · Mahlgrad und Wasser zu Hause · Handwerk ohne Küchenlatein\n\nBewährte Hook-Muster:\n- Die meisten {branche} machen {üblicher_weg}. Wir {abweichung} — und das hat einen unangenehmen Grund.\n- {zahl}× {vorgang} klingt nach Angeberei. Ist aber nur die Konsequenz aus {problem}.\n- Dauert länger, kostet mehr {ressource}. Dafür {ergebnis}.\n- Probier's, und wenn du {kein_unterschied} merkst, sag's mir ehrlich.\n- Das ist eigentlich {vorwurf} — nur andersrum."
+}
