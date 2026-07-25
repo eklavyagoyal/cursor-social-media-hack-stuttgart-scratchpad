@@ -24,7 +24,7 @@ async function graph<T>(
   const json = (await res.json().catch(() => ({}))) as T & GraphError;
   if (!res.ok || json.error) {
     throw new Error(
-      `Instagram Graph ${res.status}: ${json.error?.message ?? "unbekannter Fehler"}`,
+      `Instagram Graph ${res.status}: ${json.error?.message ?? "unknown error"}`,
     );
   }
   return json;
@@ -76,10 +76,10 @@ export async function publishToInstagram(
       });
       status = s.status_code ?? "IN_PROGRESS";
       if (status === "FINISHED") break;
-      if (status === "ERROR") throw new Error(`Instagram Transcoding fehlgeschlagen: ${s.status ?? ""}`);
+      if (status === "ERROR") throw new Error(`Instagram transcoding failed: ${s.status ?? ""}`);
     }
     if (status !== "FINISHED") {
-      throw new Error(`Instagram war nach dem Timeout noch bei "${status}".`);
+      throw new Error(`Instagram was still at "${status}" when the timeout hit.`);
     }
 
     const published = await graph<{ id: string }>(`${igUserId}/media_publish`, {
@@ -133,7 +133,7 @@ export async function publishToTelegram(
       description?: string;
       result?: { message_id: number };
     };
-    if (!json.ok) throw new Error(json.description ?? "unbekannter Fehler");
+    if (!json.ok) throw new Error(json.description ?? "unknown error");
 
     return {
       target: "telegram",
