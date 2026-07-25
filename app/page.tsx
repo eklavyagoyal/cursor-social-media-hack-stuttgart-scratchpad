@@ -49,10 +49,23 @@ export default function Home() {
 
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const secretInput = useRef<HTMLInputElement | null>(null);
 
   const brandTrace = useTrace();
   const briefTrace = useTrace();
   const processTrace = useTrace();
+
+  /**
+   * Uncontrolled, and refilled when the node attaches rather than on page mount —
+   * the publish step is rendered conditionally, so a mount effect would run while
+   * this input does not exist yet and the value would be lost on reload.
+   * sessionStorage, not localStorage: the secret shouldn't outlive the browser
+   * session on a laptop that gets passed around at a hackathon.
+   */
+  function attachSecretInput(el: HTMLInputElement | null) {
+    secretInput.current = el;
+    if (el && !el.value) el.value = sessionStorage.getItem("publishSecret") ?? "";
+  }
 
   /** Brand step resolved one way or another — the topic input is live. */
   const briefUnlocked = Boolean(genome) || brandSkipped;
@@ -243,7 +256,10 @@ export default function Home() {
     try {
       const res = await fetch("/api/publish", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "x-publish-secret": secretInput.current?.value ?? "",
+        },
         body: JSON.stringify({ slug: result.slug, caption }),
       });
       const json = await res.json();
@@ -502,6 +518,14 @@ export default function Home() {
             />
 
             <div className="mt-4 flex flex-wrap items-center gap-4">
+              <input
+                ref={attachSecretInput}
+                type="password"
+                onChange={(e) => sessionStorage.setItem("publishSecret", e.target.value)}
+                placeholder="Operator-Freigabe"
+                autoComplete="off"
+                className="w-52 rounded-xl border border-border bg-surface px-4 py-3 font-mono text-[13px] outline-none placeholder:text-muted/70 focus:border-accent/60"
+              />
               <button
                 type="button"
                 onClick={publish}
@@ -510,10 +534,12 @@ export default function Home() {
               >
                 {publishPhase === "running" ? "lädt hoch…" : "Auf Instagram posten"}
               </button>
-              <p className="font-mono text-[11px] text-muted">
-                Sicherheitsschalter: PUBLISH_ENABLED in .env.local
-              </p>
             </div>
+
+            <p className="mt-3 max-w-xl font-mono text-[11px] leading-relaxed text-muted">
+              Zwei Schlösser, weil die Caption vom Client kommt und auf einem echten Account landet:
+              PUBLISH_ENABLED und PUBLISH_SECRET, beide in .env.local.
+            </p>
 
             {publishResults.length > 0 && (
               <div className="mt-6">
