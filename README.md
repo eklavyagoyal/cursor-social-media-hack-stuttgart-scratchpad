@@ -7,8 +7,10 @@ camera, and how long each shot runs. You film it in one take. It transcribes wit
 timings, cuts the silence and the "ähm"s, burns captions, renders a 1080×1920 mp4 and posts it
 to Instagram.
 
-The first step reads your website and extracts how you actually write, so the script comes back
-in your own phrases instead of generic Reel-speak.
+Before any of that it does two crawls. The first reads your website and extracts how you
+actually write. The second searches short-form platforms for what your niche is posting this
+month, and turns that into a shooting decision — angle, hook, format, cut structure, length. So
+the script comes back in your own phrases, about something that is currently landing.
 
 ▶ **[`samples/reel.mp4`](samples/reel.mp4)** — rendered by the pipeline · full output in
 [`samples/`](samples/)
@@ -16,12 +18,13 @@ in your own phrases instead of generic Reel-speak.
 ## The pipeline
 
 ```
-  URL ──▶ brand genome ──▶ topic ──▶ shoot brief ──▶ [ you film it ] ──▶ upload
-       Firecrawl + GPT-5.6                GPT-5.6                           │
-                                                                             ▼
-  Instagram ◀── publish ◀── mp4 ◀── burn captions ◀── cut ◀── transcribe ◀────┘
-    Graph API              ffmpeg    @napi-rs/canvas   lib/cut  ElevenLabs Scribe
-                                                                (word-level timings)
+  URL ──▶ brand genome ──▶ market scan ──▶ angle ──▶ shoot brief ──▶ [ you film it ]
+       Firecrawl scrape    Firecrawl search          GPT-5.6                    │
+       + GPT-5.6           short-form, last 30d                                 │
+                                                                                ▼
+  Instagram ◀── publish ◀── mp4 ◀── burn captions ◀── cut ◀── transcribe ◀── upload
+    Graph API              ffmpeg   @napi-rs/canvas  lib/cut  ElevenLabs Scribe
+                                                             (word-level timings)
 ```
 
 Word-level timings are what makes the rest possible: the cut plan is built from word
@@ -39,6 +42,7 @@ Precise, because a vague limitations section is worth less than an honest one.
 | **Vertical render, 1080×1920, captions burned in** | Real, same command. This ffmpeg build has no libass, so captions are drawn as PNGs with `@napi-rs/canvas` and composited |
 | **Transcription** | Real, needs `ELEVENLABS_API_KEY`. Called over REST, not the SDK, which mangles the `words` field |
 | **Brand genome + shoot brief** | Real, need `FIRECRAWL_API_KEY` + `OPENAI_API_KEY`. Without them the UI falls back to the cached profile and says so on screen |
+| **Market scan** | Real, needs `FIRECRAWL_API_KEY` alone — it returns the evidence either way. With `OPENAI_API_KEY` it also derives angles; without one it degrades to the raw findings and labels itself as degraded rather than inventing them |
 | **Instagram publishing** | Implemented against the Graph API v23. Needs an Instagram **Business** account, a token, and the file behind a public HTTPS URL — Instagram fetches the video itself, so localhost cannot work. Gated behind `PUBLISH_ENABLED` **and** an operator secret |
 | **Telegram publishing** | Real, needs a bot token. Used as the proof channel that never waits on a platform review |
 | **The cached demo path** | Real files, committed: `public/demo/`. Runs with no keys and no network |
@@ -103,7 +107,8 @@ One file per job. No framework beyond Next.js.
 |---|---|
 | `lib/types.ts` | The contracts. `ShootBrief`, `Transcript`, `CutPlan`, `CaptionGroup`, `ProcessResult` |
 | `lib/brand.ts` | One URL → `BrandGenome`. Firecrawl scrapes the voice-carrying pages, GPT-5.6 reverse-engineers voice, palette and verbatim phrases |
-| `lib/brief.ts` | Topic + brand context → `ShootBrief` via GPT-5.6 |
+| `lib/research.ts` | Genome → what the niche posts now. Firecrawl search restricted to short-form domains, then angles with hook, format and cut structure. Appended to the brief's `context`, so no contract changes |
+| `lib/brief.ts` | Topic + brand context + market context → `ShootBrief` via GPT-5.6 |
 | `lib/transcribe.ts` | Audio → transcript with per-word start/end times (ElevenLabs Scribe) |
 | `lib/cut.ts` | Word timings → cut plan. Hesitations always go; discourse fillers are opt-in because they can be load-bearing. Also groups captions and maps them onto the output timeline |
 | `lib/caption-image.ts` | Draws each caption group as a transparent PNG |

@@ -133,6 +133,27 @@ await check("demo/result.json · ProcessResult", async () => {
   return `${r.plan.sourceDuration.toFixed(1)}s → ${r.plan.outDuration.toFixed(1)}s · ${r.captions.length} Untertitel`;
 });
 
+await check("demo/research.json · MarketResearch", async () => {
+  const res = await fetch(`${BASE}/demo/research.json`);
+  // Optional: the offline path still works without it, the Markt step is empty.
+  if (res.status === 404) return "nicht vorhanden — Markt-Schritt bleibt leer";
+  assert(res.ok, `GET /demo/research.json → ${res.status}`);
+  const r = (await res.json()) as Record<string, any>;
+  need(r, "queries", isArr(r.queries));
+  need(r, "references", Array.isArray(r.references));
+  need(r, "context", typeof r.context === "string");
+  need(r, "angles", Array.isArray(r.angles));
+  r.references.forEach((x: Record<string, unknown>, i: number) => {
+    need(r, `references[${i}]`, isStr(x.url) && isStr(x.platform));
+  });
+  r.angles.forEach((a: Record<string, unknown>, i: number) => {
+    need(r, `angles[${i}].hook`, isStr(a.hook));
+    need(r, `angles[${i}].cuts`, isArr(a.cuts));
+  });
+  const note = r.angles.length ? `${r.angles.length} Winkel` : "nur Fundstellen (kein Key beim Cachen)";
+  return `${r.references.length} Fundstellen · ${note}`;
+});
+
 // ── 3. the media the cached path actually plays ─────────────────────────────
 for (const [label, path] of [
   ["demo/demo.mp4 · gerendert", "/demo/demo.mp4"],
