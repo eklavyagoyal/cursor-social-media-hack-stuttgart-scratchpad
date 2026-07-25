@@ -1,51 +1,51 @@
 {
-  "id": "brief-ms0brx4i",
+  "id": "brief-ms0cdhzw",
   "topic": "Knowledge that was never written down",
   "hook": "Every company runs on knowledge that was never written down.",
-  "totalSeconds": 30,
+  "totalSeconds": 29,
   "shots": [
     {
       "n": 1,
       "label": "Hook",
       "seconds": 4,
       "say": "Every company runs on knowledge that was never written down.",
-      "camera": "Phone vertical at eye height, arm’s length away. Look straight into the lens and stay still.",
+      "camera": "Phone vertical at eye height, arm extended, close framing from shoulders up. Look straight into the lens and stay still.",
       "onScreen": "Every company runs on knowledge that was never written down."
     },
     {
       "n": 2,
       "label": "Problem",
-      "seconds": 6,
-      "say": "Around seventy percent of company knowledge is tacit. It lives in people, not documents.",
-      "camera": "Keep the phone at eye height. Take one slow step toward the camera on the second sentence.",
-      "onScreen": "Around 70% is tacit."
+      "seconds": 7,
+      "say": "Roughly 70 percent of what your organisation knows is tacit. It lives in people, not documents.",
+      "camera": "Keep the phone vertical at chest height. Walk slowly beside a production line, workshop wall, or office corridor while speaking.",
+      "onScreen": "Roughly 70% is tacit."
     },
     {
       "n": 3,
       "label": "Consequence",
-      "seconds": 5,
-      "say": "Your senior engineer knows why the line fails on cold Mondays. The manual does not.",
-      "camera": "Move the phone to chest height for a tighter head-and-shoulders frame. Hold it steady.",
-      "onScreen": "The manual does not know."
+      "seconds": 7,
+      "say": "That includes the workaround, the warning sign, and the reason the standard process sometimes fails. Once they're gone, it's gone.",
+      "camera": "Stop walking. Place the phone on a desk at eye height and frame yourself from the waist up. Count the three examples on your fingers.",
+      "onScreen": "The reasoning was never documented."
     },
     {
       "n": 4,
       "label": "Method",
-      "seconds": 8,
-      "say": "A voice-first interview captures that context in thirty to sixty minutes. A human checks it before anything is stored.",
-      "camera": "Sit at a desk with the phone propped vertically against a monitor, about 60 centimetres away. Gesture once toward an open notebook.",
+      "seconds": 7,
+      "say": "A 30-to-60-minute voice interview captures the reasoning, not just the result. A person reviews it before anything is stored.",
+      "camera": "Hold the phone vertically at arm's length, framed from mid-chest up. Speak directly to the lens with no movement.",
       "onScreen": "Interview. Review. Store."
     },
     {
       "n": 5,
       "label": "Payoff",
-      "seconds": 7,
-      "say": "The result is not perfect memory. It is a cited answer. And when it doesn’t know, it says so.",
-      "camera": "Return to the original eye-level position. Pause before the final sentence and hold eye contact.",
-      "onScreen": "Cited, or nothing."
+      "seconds": 4,
+      "say": "Don't let the answer retire with the expert.",
+      "camera": "Move the phone slightly closer for a tight head-and-shoulders frame. Hold still for one second after the final word.",
+      "onScreen": "Don't let the answer retire with the expert."
     }
   ],
-  "caption": "The answer is already on your factory floor. It may never have reached a document.\n\nVoice-first expert interviews capture tacit knowledge before retirement. Human review comes before storage. Answers carry citations, or none at all.\n\nDon’t let the answer retire with the expert.",
+  "caption": "Every company runs on knowledge that was never written down.\n\nRoughly 70% of organisational knowledge is tacit. The result may be documented. The reasoning often is not.\n\nCapture it while the expert can still explain it. Human review comes before storage.",
   "hashtags": [
     "#KnowledgeManagement",
     "#Manufacturing",
@@ -54,8 +54,8 @@
     "#IndustrialKnowledge",
     "#EngineeringLeadership"
   ],
-  "cta": "Which answer in your plant still exists in only one person’s head?",
-  "soundIdea": "Originalton. No music. Keep the pauses and room tone.",
-  "bestPostTime": "Tue 07:00-08:30 local time",
-  "createdAt": "2026-07-25T12:08:13.938Z"
+  "cta": "Which critical process at your site depends on one person knowing the answer?",
+  "soundIdea": "Room sound only. Keep the machinery or workplace ambience low enough for clear speech.",
+  "bestPostTime": "Tue 18:30-20:00",
+  "createdAt": "2026-07-25T12:25:00.764Z"
 }
