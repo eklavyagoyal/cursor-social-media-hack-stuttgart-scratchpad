@@ -391,7 +391,7 @@ export default function Home() {
 
             {brief && (
               <div className="mt-8">
-                <BriefPanel brief={brief} />
+                <BriefPanel brief={brief} petPhrases={genome?.voice.petPhrases} />
               </div>
             )}
           </Step>
