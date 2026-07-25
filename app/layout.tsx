@@ -19,14 +19,15 @@ const sans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Doppel",
-  description: "One link in. A content studio that sounds like you out.",
+  title: "Vorgabe → Dreh → Post",
+  description:
+    "Ein Link, ein Thema, 30 Sekunden Handyvideo — fertig geschnittener Reel mit Untertiteln.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="en"
+      lang="de"
       className={`${serif.variable} ${mono.variable} ${sans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">{children}</body>
