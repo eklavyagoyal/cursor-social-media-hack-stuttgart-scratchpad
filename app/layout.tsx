@@ -1,34 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Instrument_Serif, JetBrains_Mono, Geist } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const serif = Instrument_Serif({
+  variable: "--font-serif-display",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const mono = JetBrains_Mono({
+  variable: "--font-mono-trace",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sans = Geist({
+  variable: "--font-sans-body",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Legacy — Vorgabe, Dreh, Post",
-  description:
-    "Du bekommst die Dreh-Vorgabe, filmst 30 Sekunden mit dem Handy, und der Rest passiert allein: Schnitt, Untertitel, Instagram.",
+  title: "Doppel",
+  description: "One link in. A content studio that sounds like you out.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="de"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="en"
+      className={`${serif.variable} ${mono.variable} ${sans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-background text-foreground">{children}</body>
     </html>
   );
 }

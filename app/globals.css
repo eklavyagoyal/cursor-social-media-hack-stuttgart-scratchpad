@@ -1,46 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0b;
-  --surface: #141417;
-  --surface-2: #1c1c21;
-  --border: #2a2a31;
-  --foreground: #f2f0ec;
-  --muted: #8b8b93;
-  --accent: #ff5a1f;
-  --live: #c8ff4d;
+  --background: #0a0a0a;
+  --foreground: #ece8e0;
+  /* Overwritten at runtime with the extracted palette's accent. */
+  --brand: #c1440e;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-border: var(--border);
   --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-live: var(--live);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand);
+
+  /* Warm greys — a neutral grey next to a warm palette reads as broken. */
+  --color-ash-100: #ece8e0;
+  --color-ash-200: #c4bfb5;
+  --color-ash-300: #928d84;
+  --color-ash-400: #6b665e;
+  --color-ash-500: #4a463f;
+  --color-ash-700: #22211e;
+  --color-ash-800: #151412;
+
+  --font-sans: var(--font-sans-body);
+  --font-serif: var(--font-serif-display);
+  --font-mono: var(--font-mono-trace);
+
+  --animate-land: land 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-rise: rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade: fade 240ms ease-out both;
+  --animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-}
-
-/* Display face for headings — a serif against the mono trace reads as editorial
-   rather than as another dashboard. */
-.display {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  letter-spacing: -0.02em;
-}
-
-@keyframes trace-in {
+@keyframes land {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -48,11 +42,73 @@ body {
   }
 }
 
-.trace-line {
-  animation: trace-in 220ms ease-out both;
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Ken Burns for the vertical short. Paused/played via animation-play-state. */
+@keyframes drift {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.16);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans-body), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A single hairline rule is the only border in the whole app. */
+.rule {
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
 }
 
 ::selection {
-  background: var(--accent);
-  color: #0a0a0b;
+  background: var(--brand);
+  color: #0a0a0a;
+}
+
+/* Chrome's autofill repaint fights the dark input. */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0 1000px #0a0a0a inset;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
 }
