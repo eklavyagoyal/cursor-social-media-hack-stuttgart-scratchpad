@@ -86,7 +86,9 @@ export function ReelPreview({ rawUrl, plan, captions }: Props) {
 
   return (
     <div className="w-full max-w-[300px]">
-      <div className="relative aspect-[9/16] overflow-hidden rounded-2xl border border-border bg-black">
+      {/* container-type makes the cqw caption size resolve against the frame
+          rather than silently falling back to the viewport. */}
+      <div className="relative aspect-[9/16] overflow-hidden rounded-xl bg-black [container-type:inline-size]">
         <video
           ref={videoRef}
           src={rawUrl}
@@ -105,7 +107,7 @@ export function ReelPreview({ rawUrl, plan, captions }: Props) {
             <p
               className="text-center font-black uppercase leading-tight text-white"
               style={{
-                fontSize: "clamp(15px, 5.2cqw, 26px)",
+                fontSize: "clamp(16px, 8.6cqw, 30px)",
                 textShadow:
                   "0 0 3px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000",
               }}
@@ -122,8 +124,10 @@ export function ReelPreview({ rawUrl, plan, captions }: Props) {
           aria-label={playing ? "Pause" : "Abspielen"}
         >
           {!playing && (
-            <span className="grid h-14 w-14 place-items-center rounded-full bg-black/55 text-xl text-white backdrop-blur-sm">
-              ▶
+            <span className="animate-fade grid h-16 w-16 place-items-center rounded-full bg-white/95">
+              <svg width="20" height="24" viewBox="0 0 20 24" fill="#0a0a0a" aria-hidden>
+                <path d="M2 1.5 18.5 12 2 22.5z" />
+              </svg>
             </span>
           )}
         </button>
