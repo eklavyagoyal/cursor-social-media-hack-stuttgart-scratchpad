@@ -76,7 +76,29 @@ export type SourceInfo = {
   hasAudio: boolean;
 };
 
-/** What POST /api/process returns. */
+/** One uploaded take: cut and captioned on its own before anything is joined. */
+export type ClipResult = {
+  /** Position in the shoot order, which is the shot it was filmed for. */
+  index: number;
+  /** The shot's heading, carried through so the result reads like the script. */
+  label?: string;
+  slug: string;
+  source: SourceInfo;
+  rawUrl: string;
+  transcript: Transcript;
+  plan: CutPlan;
+  captions: CaptionGroup[];
+  render: RenderResult;
+};
+
+/**
+ * What POST /api/process returns.
+ *
+ * The single-clip fields are still required, because one clip is still the
+ * shortest path to a finished reel and every existing view codes against them.
+ * A multi-clip run fills them from its first take and puts the whole shoot in
+ * `clips`, with `render` pointing at the joined result rather than that take.
+ */
 export type ProcessResult = {
   slug: string;
   source: SourceInfo;
@@ -85,6 +107,8 @@ export type ProcessResult = {
   plan: CutPlan;
   captions: CaptionGroup[];
   render: RenderResult;
+  /** Always present; length 1 for a single upload. */
+  clips: ClipResult[];
 };
 
 export type PublishTarget = "instagram" | "telegram";

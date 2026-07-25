@@ -93,6 +93,19 @@ const result: ProcessResult = {
   plan,
   captions,
   render,
+  // A shoot of one. The views branch on this length, so it cannot be omitted.
+  clips: [
+    {
+      index: 0,
+      slug: SLUG,
+      source,
+      rawUrl: `/demo/${SLUG}-raw${ext}`,
+      transcript,
+      plan,
+      captions,
+      render,
+    },
+  ],
 };
 
 await writeFile(path.join(DEMO, "result.json"), JSON.stringify(result, null, 2), "utf8");

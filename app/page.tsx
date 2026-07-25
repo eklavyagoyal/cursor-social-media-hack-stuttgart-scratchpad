@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import { BriefPanel } from "@/components/BriefPanel";
+import { ClipSlots } from "@/components/ClipSlots";
 import { CutTimeline } from "@/components/CutTimeline";
 import { GenomeCard } from "@/components/GenomeCard";
 import { MarketPanel } from "@/components/MarketPanel";
 import { ReelPreview } from "@/components/ReelPreview";
 import { ShipPanel } from "@/components/ShipPanel";
+import { ShootBreakdown } from "@/components/ShootBreakdown";
 import { type RailStep, StepRail, type StepStatus } from "@/components/StepRail";
 import { useTrace } from "@/components/useTrace";
 import type { BrandGenome } from "@/lib/brand";
@@ -47,6 +49,13 @@ export default function Home() {
   const [topic, setTopic] = useState("");
   const [brief, setBrief] = useState<ShootBrief | null>(null);
   const [briefPhase, setBriefPhase] = useState<Phase>("idle");
+  const [adjust, setAdjust] = useState("");
+
+  /**
+   * One entry per shot, positionally. Sparse on purpose: an operator films the
+   * hook first and the rest later, and index is what maps a take to its shot.
+   */
+  const [clipFiles, setClipFiles] = useState<(File | null)[]>([]);
 
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [processPhase, setProcessPhase] = useState<Phase>("idle");
@@ -234,11 +243,27 @@ export default function Home() {
     }
   }
 
-  async function makeBrief() {
+  /**
+   * Builds the script, or revises the one on screen.
+   *
+   * A revision keeps the takes already attached to shots that survived it — the
+   * operator asked to change one shot, not to lose the footage for the other five.
+   */
+  async function makeBrief({ adjustment }: { adjustment?: string } = {}) {
     if (!topic.trim()) return;
+    const revising = Boolean(adjustment?.trim() && brief);
+
     setBriefPhase("running");
     setError(null);
-    briefTrace.start([
+    briefTrace.start(
+      revising
+        ? [
+            { after: 0, kind: "step", msg: "Reading the current script" },
+            { after: 700, kind: "ok", msg: `Change: ${adjustment!.trim().slice(0, 60)}` },
+            { after: 1600, kind: "step", msg: "Revising only what the change touches" },
+            { after: 6000, kind: "step", msg: "Re-checking shot lengths" },
+          ]
+        : [
       { after: 0, kind: "step", msg: "Sharpening the topic" },
       ...(genome
         ? ([{ after: 900, kind: "ok", msg: `Grounded in: ${genome.name}` }] as const)
@@ -252,10 +277,11 @@ export default function Home() {
             },
           ] as const)
         : []),
-      { after: 2000, kind: "step", msg: "Writing the hook" },
-      { after: 5000, kind: "step", msg: "Shots and camera direction" },
-      { after: 9000, kind: "step", msg: "Caption and hashtags" },
-    ]);
+            { after: 2000, kind: "step", msg: "Writing the hook" },
+            { after: 5000, kind: "step", msg: "Shots and camera direction" },
+            { after: 9000, kind: "step", msg: "Caption and hashtags" },
+          ],
+    );
     try {
       // Both blocks verbatim: lib/brand.ts renders how they sound, lib/research.ts
       // renders what the niche is doing. Neither is reformatted here.
@@ -265,17 +291,26 @@ export default function Home() {
       const res = await fetch("/api/brief", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ topic, context }),
+        body: JSON.stringify({
+          topic,
+          context,
+          ...(revising ? { adjust: adjustment!.trim(), previous: brief } : {}),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Building the brief failed.");
       const b = json.brief as ShootBrief;
       setBrief(b);
       setCaption(`${b.caption}\n\n${b.hashtags.join(" ")}`);
+      // Positional: a revision that kept shots 1-4 keeps their footage attached.
+      setClipFiles((prev) =>
+        Array.from({ length: b.shots.length }, (_, i) => (revising ? prev[i] ?? null : null)),
+      );
+      if (revising) setAdjust("");
       setBriefPhase("done");
       briefTrace.finish(
         `${b.shots.length} shots · ${b.totalSeconds}s`,
-        `Caption + ${b.hashtags.length} hashtags`,
+        revising ? "revised, footage kept" : `Caption + ${b.hashtags.length} hashtags`,
       );
     } catch (e) {
       const msg = humanError(e instanceof Error ? e.message : String(e));
@@ -285,23 +320,46 @@ export default function Home() {
     }
   }
 
-  async function processVideo(file: File) {
+  /**
+   * Sends the shoot. One take or twelve takes the same route — the server cuts each
+   * on its own and joins them in the order they are passed.
+   */
+  async function processClips(takes: { file: File; label?: string }[]) {
+    if (takes.length === 0) return;
+    const many = takes.length > 1;
+    const totalBytes = takes.reduce((sum, t) => sum + t.file.size, 0);
+
     setProcessPhase("running");
     setError(null);
     setResult(null);
     setPublishResults([]);
     processTrace.start([
-      { after: 0, kind: "ok", msg: `${file.name} · ${mb(file.size)}` },
+      {
+        after: 0,
+        kind: "ok",
+        msg: many
+          ? `${takes.length} clips · ${mb(totalBytes)}`
+          : `${takes[0].file.name} · ${mb(totalBytes)}`,
+      },
       { after: 600, kind: "step", msg: "Extracting audio" },
       { after: 3000, kind: "step", msg: "Transcribing, with word timings" },
       { after: 12000, kind: "step", msg: "Finding silence and filler words" },
       { after: 18000, kind: "step", msg: "Grouping captions" },
-      { after: 24000, kind: "step", msg: "Rendering mp4, burning in captions" },
+      {
+        after: 24000,
+        kind: "step",
+        msg: many ? "Rendering each take, captions burned in" : "Rendering mp4, burning in captions",
+      },
+      ...(many
+        ? ([{ after: 34000, kind: "step", msg: "Joining the takes into one reel" }] as const)
+        : []),
     ]);
     try {
       const form = new FormData();
-      form.append("video", file);
+      // Repeated field, in shoot order — the server reads it with getAll.
+      for (const t of takes) form.append("video", t.file);
       form.append("aggressive", String(aggressive));
+      if (many) form.append("labels", JSON.stringify(takes.map((t) => t.label ?? "")));
 
       const res = await fetch("/api/process", { method: "POST", body: form });
       const json = await res.json();
@@ -309,10 +367,15 @@ export default function Home() {
       const r = json as ProcessResult;
       setResult(r);
       setProcessPhase("done");
+
+      const cut = r.clips.reduce((sum, c) => sum + c.plan.removedSeconds, 0);
+      const groups = r.clips.reduce((sum, c) => sum + c.captions.length, 0);
       processTrace.finish(
-        `${r.plan.removedSeconds.toFixed(1)}s cut · ${r.plan.outDuration.toFixed(1)}s final length`,
-        `${r.captions.length} caption groups`,
-        `mp4 ${r.render.width}×${r.render.height} · ${mb(r.render.sizeBytes)}`,
+        `${cut.toFixed(1)}s cut · ${r.render.duration.toFixed(1)}s final length`,
+        `${groups} caption groups`,
+        many
+          ? `${r.clips.length} takes joined · ${mb(r.render.sizeBytes)}`
+          : `mp4 ${r.render.width}×${r.render.height} · ${mb(r.render.sizeBytes)}`,
       );
     } catch (e) {
       const msg = humanError(e instanceof Error ? e.message : String(e));
@@ -320,6 +383,14 @@ export default function Home() {
       setError(msg);
       setProcessPhase("error");
     }
+  }
+
+  /** The shoot list, compacted to the takes that actually exist. */
+  function attachedTakes(): { file: File; label?: string }[] {
+    if (!brief) return [];
+    return clipFiles.flatMap((file, i) =>
+      file ? [{ file, label: brief.shots[i]?.label }] : [],
+    );
   }
 
   async function publish() {
@@ -347,6 +418,7 @@ export default function Home() {
   }
 
   const posted = publishResults.filter((r) => r.status === "posted").length;
+  const attachedCount = clipFiles.filter(Boolean).length;
 
   const steps: RailStep[] = [
     {
@@ -385,7 +457,13 @@ export default function Home() {
       title: "Shoot & upload",
       status: rail(processPhase, briefUnlocked),
       lines: processTrace.lines,
-      summary: result ? `${mb(result.render.sizeBytes)} · ${result.render.height}p` : undefined,
+      summary: result
+        ? result.clips.length > 1
+          ? `${result.clips.length} takes · ${mb(result.render.sizeBytes)}`
+          : `${mb(result.render.sizeBytes)} · ${result.render.height}p`
+        : brief && attachedCount > 0
+          ? `${attachedCount} of ${brief.shots.length} clips ready`
+          : undefined,
     },
     {
       id: "cut",
@@ -393,7 +471,9 @@ export default function Home() {
       title: "Cut & captions",
       status: rail(result ? "done" : "idle", briefUnlocked),
       summary: result
-        ? `${result.plan.removedSeconds.toFixed(1)}s cut · ${result.captions.length} groups`
+        ? `${result.clips
+            .reduce((sum, c) => sum + c.plan.removedSeconds, 0)
+            .toFixed(1)}s cut · ${result.clips.reduce((sum, c) => sum + c.captions.length, 0)} groups`
         : undefined,
     },
     {
@@ -572,13 +652,42 @@ export default function Home() {
                 />
                 <button
                   type="button"
-                  onClick={makeBrief}
+                  onClick={() => makeBrief()}
                   disabled={briefPhase === "running" || !topic.trim()}
                   className="rounded-lg bg-accent px-6 py-3 text-[15px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
                 >
-                  {briefPhase === "running" ? "thinking…" : "Build the script"}
+                  {briefPhase === "running" ? "thinking…" : brief ? "Rebuild" : "Build the script"}
                 </button>
               </div>
+
+              {brief && (
+                <div className="mt-6 border-l-2 border-accent/40 pl-4">
+                  <p className="eyebrow">Adjust the template</p>
+                  <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted">
+                    Change it in words instead of rebuilding it. Shots the change does not
+                    mention stay as they are, and clips already attached to them stay attached.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                    <input
+                      value={adjust}
+                      onChange={(e) => setAdjust(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && adjust.trim() && makeBrief({ adjustment: adjust })
+                      }
+                      placeholder="e.g. make shot 3 shorter, add a shot of the machine running"
+                      className="max-w-xl flex-1 rounded-lg border border-border bg-surface px-4 py-2.5 text-[14px] outline-none transition-colors placeholder:text-muted/70 focus:border-accent/60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => makeBrief({ adjustment: adjust })}
+                      disabled={briefPhase === "running" || !adjust.trim()}
+                      className="rounded-lg border border-accent/50 px-5 py-2.5 text-[14px] text-accent transition-colors hover:bg-accent/10 disabled:opacity-40"
+                    >
+                      {briefPhase === "running" ? "revising…" : "Apply change"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {brief && (
                 <div className="mt-8">
@@ -591,7 +700,11 @@ export default function Home() {
               id="shoot"
               n={4}
               title="Shoot & upload"
-              hint="Phone, vertical, one take. Mistakes don't matter — they get cut out."
+              hint={
+                brief
+                  ? "Phone, vertical, one take per shot. Mistakes don't matter — they get cut out, and each take is cut on its own before they're joined."
+                  : "Phone, vertical, one take. Mistakes don't matter — they get cut out."
+              }
             >
               <label className="flex cursor-pointer items-center gap-3 font-mono text-[12px] text-muted">
                 <input
@@ -603,7 +716,49 @@ export default function Home() {
                 Also cut discourse fillers (“like”, “basically”, “you know”) — tighter, but riskier
               </label>
 
-              <div className="mt-4 flex flex-wrap items-center gap-4">
+              {brief && brief.shots.length > 0 && (
+                <div className="mt-6">
+                  <ClipSlots
+                    shots={brief.shots}
+                    files={clipFiles}
+                    disabled={processPhase === "running"}
+                    onPick={(i, file) =>
+                      setClipFiles((prev) => {
+                        const next = [...prev];
+                        next[i] = file;
+                        return next;
+                      })
+                    }
+                    onClear={(i) =>
+                      setClipFiles((prev) => {
+                        const next = [...prev];
+                        next[i] = null;
+                        return next;
+                      })
+                    }
+                  />
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap items-center gap-4">
+                {brief && brief.shots.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void processClips(attachedTakes())}
+                    disabled={processPhase === "running" || attachedCount === 0}
+                    className="rounded-lg bg-accent px-6 py-3 text-[15px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
+                  >
+                    {processPhase === "running"
+                      ? "processing…"
+                      : attachedCount === 0
+                        ? "Attach a clip to start"
+                        : attachedCount === 1
+                          ? "Cut this clip"
+                          : `Cut and join ${attachedCount} clips`}
+                  </button>
+                )}
+
+                {/* The escape hatch: no script, or a single clip that ignores one. */}
                 <input
                   ref={fileInput}
                   type="file"
@@ -611,21 +766,30 @@ export default function Home() {
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) void processVideo(f);
+                    if (f) void processClips([{ file: f }]);
+                    e.target.value = "";
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => fileInput.current?.click()}
                   disabled={processPhase === "running"}
-                  className="rounded-lg border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60 disabled:opacity-40"
+                  className={
+                    brief && brief.shots.length > 0
+                      ? "font-mono text-[12px] text-muted underline decoration-dotted underline-offset-4 hover:text-foreground disabled:opacity-40"
+                      : "rounded-lg border border-border bg-surface px-6 py-3 text-[15px] transition-colors hover:border-accent/60 disabled:opacity-40"
+                  }
                 >
-                  {processPhase === "running" ? "processing…" : "Choose raw video"}
+                  {brief && brief.shots.length > 0
+                    ? "or process one single clip instead"
+                    : processPhase === "running"
+                      ? "processing…"
+                      : "Choose raw video"}
                 </button>
 
                 {processPhase === "running" && (
                   <p className="font-mono text-[12px] text-muted">
-                    Takes about as long as the clip — progress runs on the left.
+                    Roughly as long as the footage — progress runs on the left.
                   </p>
                 )}
               </div>
@@ -635,10 +799,16 @@ export default function Home() {
               id="cut"
               n={5}
               title="Cut & captions"
-              hint="The preview runs without rendering — the mp4 sits next to it."
+              hint={
+                result && result.clips.length > 1
+                  ? "Each take was cut on its own, then joined in script order."
+                  : "The preview runs without rendering — the mp4 sits next to it."
+              }
             >
               {!result ? (
                 <p className="font-mono text-[12px] text-muted">No clip processed yet.</p>
+              ) : result.clips.length > 1 ? (
+                <ShootBreakdown clips={result.clips} render={result.render} />
               ) : (
                 <div className="grid gap-8 xl:grid-cols-[320px_1fr]">
                   <ReelPreview

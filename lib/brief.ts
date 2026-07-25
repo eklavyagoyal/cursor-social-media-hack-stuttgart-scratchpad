@@ -63,6 +63,13 @@ export type BriefInput = {
   /** Optional voice/brand grounding, e.g. scraped profile or website text. */
   context?: string;
   targetSeconds?: number;
+  /**
+   * A plain-language change to an existing script: "make shot 3 shorter", "add a
+   * shot of the machine running", "drop the joke". Needs `previous` to act on.
+   */
+  adjust?: string;
+  /** The script being revised. Without it, `adjust` is ignored. */
+  previous?: ShootBrief;
 };
 
 function normalize(raw: Record<string, unknown>, topic: string): ShootBrief {
@@ -102,11 +109,43 @@ export async function generateBrief(input: BriefInput): Promise<ShootBrief> {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY missing from .env.local");
   const client = new OpenAI();
 
-  const parts = [`THEMA: ${input.topic}`];
+  const parts = [`TOPIC: ${input.topic}`];
   if (input.targetSeconds) parts.push(`TARGET LENGTH: about ${input.targetSeconds} seconds`);
   if (input.context) {
     parts.push(
       `ACCOUNT CONTEXT (match this voice):\n${input.context.slice(0, 20_000)}`,
+    );
+  }
+
+  /**
+   * Revision, not regeneration. The operator has usually already filmed against
+   * some of these shots, so a request to shorten shot 3 must not silently rewrite
+   * shot 1 — the instruction is scoped explicitly, and the previous script is sent
+   * verbatim so there is something concrete to leave alone.
+   */
+  const revising = Boolean(input.adjust?.trim() && input.previous);
+  if (revising) {
+    parts.push(
+      `CURRENT SCRIPT (revise this, do not start over):\n` +
+        JSON.stringify(
+          {
+            hook: input.previous!.hook,
+            totalSeconds: input.previous!.totalSeconds,
+            shots: input.previous!.shots,
+            caption: input.previous!.caption,
+            hashtags: input.previous!.hashtags,
+            cta: input.previous!.cta,
+            soundIdea: input.previous!.soundIdea,
+            bestPostTime: input.previous!.bestPostTime,
+          },
+          null,
+          1,
+        ),
+      `REQUESTED CHANGE: ${input.adjust!.trim()}\n\n` +
+        `Apply exactly this change. Keep every shot the change does not concern ` +
+        `word for word, including its label, seconds and camera direction. ` +
+        `Renumber shots only if the count changed, and keep totalSeconds equal to ` +
+        `the sum of the shots.`,
     );
   }
 

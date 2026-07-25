@@ -184,5 +184,196 @@
     "height": 1920,
     "duration": 6.033333,
     "sizeBytes": 346678
-  }
+  },
+  "clips": [
+    {
+      "index": 0,
+      "slug": "demo",
+      "source": {
+        "duration": 12,
+        "width": 1280,
+        "height": 720,
+        "hasAudio": true
+      },
+      "rawUrl": "/demo/demo-raw.mp4",
+      "transcript": {
+        "text": "Most roasters roast once. um We roast three times. And that's basically laziness just backwards.",
+        "languageCode": "en",
+        "words": [
+          {
+            "text": "Most",
+            "start": 0.8,
+            "end": 1.05,
+            "type": "word"
+          },
+          {
+            "text": "roasters",
+            "start": 1.05,
+            "end": 1.5,
+            "type": "word"
+          },
+          {
+            "text": "roast",
+            "start": 1.5,
+            "end": 1.8,
+            "type": "word"
+          },
+          {
+            "text": "once.",
+            "start": 1.8,
+            "end": 2.3,
+            "type": "word"
+          },
+          {
+            "text": "um",
+            "start": 3.1,
+            "end": 3.5,
+            "type": "word"
+          },
+          {
+            "text": "We",
+            "start": 5.9,
+            "end": 6.1,
+            "type": "word"
+          },
+          {
+            "text": "roast",
+            "start": 6.1,
+            "end": 6.4,
+            "type": "word"
+          },
+          {
+            "text": "three",
+            "start": 6.4,
+            "end": 6.7,
+            "type": "word"
+          },
+          {
+            "text": "times.",
+            "start": 6.7,
+            "end": 7.2,
+            "type": "word"
+          },
+          {
+            "text": "And",
+            "start": 7.4,
+            "end": 7.6,
+            "type": "word"
+          },
+          {
+            "text": "that's",
+            "start": 7.6,
+            "end": 7.85,
+            "type": "word"
+          },
+          {
+            "text": "basically",
+            "start": 7.85,
+            "end": 8.35,
+            "type": "word"
+          },
+          {
+            "text": "laziness",
+            "start": 8.35,
+            "end": 8.95,
+            "type": "word"
+          },
+          {
+            "text": "just",
+            "start": 9.9,
+            "end": 10.1,
+            "type": "word"
+          },
+          {
+            "text": "backwards.",
+            "start": 10.1,
+            "end": 10.9,
+            "type": "word"
+          }
+        ]
+      },
+      "plan": {
+        "sourceDuration": 12,
+        "outDuration": 5.97,
+        "removedSeconds": 6.03,
+        "keep": [
+          {
+            "start": 0.73,
+            "end": 2.3699999999999997
+          },
+          {
+            "start": 5.83,
+            "end": 9.02
+          },
+          {
+            "start": 9.83,
+            "end": 10.97
+          }
+        ],
+        "cuts": [
+          {
+            "start": 0,
+            "end": 0.73,
+            "reason": "head"
+          },
+          {
+            "start": 2.3699999999999997,
+            "end": 5.83,
+            "reason": "filler",
+            "text": "um"
+          },
+          {
+            "start": 9.02,
+            "end": 9.83,
+            "reason": "silence"
+          },
+          {
+            "start": 10.97,
+            "end": 12,
+            "reason": "tail"
+          }
+        ]
+      },
+      "captions": [
+        {
+          "start": 0.07000000000000006,
+          "end": 1.07,
+          "text": "MOST ROASTERS ROAST"
+        },
+        {
+          "start": 1.07,
+          "end": 1.71,
+          "text": "ONCE."
+        },
+        {
+          "start": 1.71,
+          "end": 2.51,
+          "text": "WE ROAST THREE"
+        },
+        {
+          "start": 2.51,
+          "end": 3.01,
+          "text": "TIMES."
+        },
+        {
+          "start": 3.21,
+          "end": 4.159999999999999,
+          "text": "AND THAT'S BASICALLY"
+        },
+        {
+          "start": 4.159999999999999,
+          "end": 5.8999999999999995,
+          "text": "LAZINESS JUST BACKWARDS."
+        }
+      ],
+      "render": {
+        "path": "public/demo/demo.mp4",
+        "publicUrl": "/demo/demo.mp4",
+        "width": 1080,
+        "height": 1920,
+        "duration": 6.033333,
+        "sizeBytes": 346678
+      }
+    }
+  ]
 }

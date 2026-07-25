@@ -177,3 +177,83 @@ export async function renderVertical(options: RenderOptions): Promise<RenderResu
     sizeBytes: size.size,
   };
 }
+
+export type ConcatOptions = {
+  /** Finished mp4s in shoot order. Every one must come from renderVertical. */
+  inputs: string[];
+  outDir: string;
+  urlPrefix: string;
+  slug: string;
+};
+
+/**
+ * Joins the per-clip renders into the reel that actually gets posted.
+ *
+ * Each part is cut and captioned on its own first, which is what makes a shoot of
+ * six takes work at all: one bad take is re-shot and re-processed without touching
+ * the other five, and a transcript never has to span a hard cut between takes.
+ *
+ * Re-encodes rather than stream-copying. Copying would be instant and every input
+ * does share our own encoder settings, but concatenated copies carry their source
+ * timestamps, and the failure that produces is audio drifting out of sync a few
+ * takes in — silent, invisible until playback, and not something to discover on
+ * stage. A few seconds of CPU is the cheaper side of that trade.
+ */
+export async function concatRenders(options: ConcatOptions): Promise<RenderResult> {
+  const { inputs, outDir, urlPrefix, slug } = options;
+  if (inputs.length === 0) throw new Error("Nothing to join.");
+
+  await mkdir(outDir, { recursive: true });
+  const outFile = path.join(outDir, `${slug}.mp4`);
+
+  // A single take needs no join; copying it keeps one code path in the caller.
+  if (inputs.length === 1) {
+    await run("ffmpeg", ["-y", "-i", path.resolve(inputs[0]), "-c", "copy",
+      "-movflags", "+faststart", path.resolve(outFile)]);
+  } else {
+    const workDir = path.join(outDir, `.${slug}-join`);
+    await mkdir(workDir, { recursive: true });
+    const listFile = path.join(workDir, "parts.txt");
+
+    // The concat demuxer reads single-quoted paths, so a quote in a filename has
+    // to be escaped or it ends the token early. Our slugs never contain one, but
+    // the list is built from paths and not from slugs.
+    const list = inputs
+      .map((f) => `file '${path.resolve(f).replace(/'/g, "'\\''")}'`)
+      .join("\n");
+    await writeFile(listFile, `${list}\n`, "utf8");
+
+    try {
+      await run("ffmpeg", [
+        "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", listFile,
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-crf", "21",
+        "-pix_fmt", "yuv420p",
+        "-r", "30",
+        "-c:a", "aac",
+        "-b:a", "128k",
+        "-ar", "44100",
+        "-movflags", "+faststart",
+        path.resolve(outFile),
+      ]);
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
+  }
+
+  const info = await probe(outFile);
+  const size = await stat(outFile);
+
+  return {
+    path: outFile,
+    publicUrl: `${urlPrefix}/${slug}.mp4`,
+    width: info.width,
+    height: info.height,
+    duration: info.duration,
+    sizeBytes: size.size,
+  };
+}

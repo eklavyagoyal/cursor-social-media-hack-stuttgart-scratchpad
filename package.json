@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:render": "tsx scripts/verify-render.mts",
+    "verify:multiclip": "tsx scripts/verify-multiclip.mts",
     "seed:demo": "tsx scripts/seed-demo.mts"
   },
   "dependencies": {
