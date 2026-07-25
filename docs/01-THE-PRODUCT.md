@@ -127,6 +127,10 @@ it looks expensive.
 - [ ] Streaming trace UI
 - [ ] Cached golden path (`/api/demo/:slug`) that works with wifi off
 
+> **2-person team:** publish **directly from `/api/publish`**, not through n8n — building the fan-out
+> twice is ~40 min you don't have. n8n then owns only the nightly loop (P1), which is the part it's
+> actually better at. → [`10-TEAM-LANES.md`](10-TEAM-LANES.md) §the two-person plan
+
 ### P1 — only if P0 is green (in this order)
 - [ ] n8n nightly trend sweep → Telegram ✅/✏️ approval buttons *(big innovation-score value)*
 - [ ] ElevenLabs **German dub** of the same short — huge wow, one API call, Stuttgart room

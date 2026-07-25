@@ -1,13 +1,75 @@
 # 10 — Team Lanes
 
-Guidebook recommends **2–3 people**. Below is the 4-lane split; collapse lanes if you're smaller.
-Priority when short-handed: **D > A > B > C**. The UI is what the round-1 judge actually sees.
+# ⭐ THE TWO-PERSON PLAN (this is us)
+
+**Budget: ~7 person-hours of build** (10:20→14:45, minus lunch, ×2). That's it. Two consequences:
+
+### 1. n8n moves off the publish path
+Building `wf-publish` in n8n *and* the app is doing the same job twice. Instead:
+
+- **Publish directly from the app** — `/api/publish` → Bluesky + Telegram. ~40 lines. Saves ~40 min.
+- **n8n does only the nightly trend loop** — cron → Firecrawl search → Claude rank → Telegram with
+  approval buttons. One workflow, ~30 min, built **last** (14:00) if P0 is green.
+
+You keep the sponsor integration, you keep the canvas screenshot, you keep the autonomy story — and
+it's *more* honest: *"the app publishes on approve; n8n is what runs at 6am when nobody's looking."*
+
+### 2. The deck gets drafted before you leave the house
+With 2 people, **both are coding at 13:00**, so nobody can draft slides then. And 15:00–16:30 already
+holds the video + repo hygiene + samples + submit. Draft the 5 slides' **words** now, screenshots
+blank. It's notes, it's allowed, and it's the single biggest de-risk available this morning.
+
+### Who does what
+
+| | **P1 — Backend** (owns A+B+C) | **P2 — Frontend** (owns D + submission) |
+|---|---|---|
+| 10:20 | `lib/types.ts` — write it, push it, tell P2 | `lib/fixtures.ts` — fake Genome + Drop, then never blocked again |
+| 10:45 | **Clone the voice.** Hardcode `ELEVENLABS_VOICE_ID`. Do this FIRST — the tier gate is the day's biggest unknown. | Genome card. Typography, palette swatches, phrase chips. **The wow screen.** |
+| 11:30 | Firecrawl → Claude → valid `BrandGenome` | Genome card done + trace UI streaming |
+| 12:15 | One Claude call → LinkedIn + thread + 4 slides + VO script + captions | Studio screen laid out |
+| 12:30 | 🔔 **E2E checkpoint** — both stop, run the whole flow, fake data OK | ↑ |
+| 13:25 | fal: 4 images in ONE call (`num_images: 4`, fixed `seed`) | **The vertical player** (~40 lines) |
+| 14:00 | ElevenLabs VO → Blob URL. Then `/api/publish` → Bluesky + Telegram | Ship screen + honest status badges |
+| 14:30 | n8n nightly loop **only if everything above is green** | Polish whatever looks worst on camera |
+| 14:45 | 🔒 Cache 3 brands into `public/demo/`. **Test with wifi OFF.** | Freeze. Set up the recording. |
+| 15:00 | Repo hygiene: README, LICENSE, `samples/`, n8n JSON | **Record the 2-min video.** 3 takes. |
+| 15:50 | Fill the deck's blank screenshots | ↑ finish + upload |
+| 16:15 | Both: open every submission link in incognito → **submit** | ↑ |
+
+### The 2-person P0 (tighter than the 4-person list in `01`)
+```
+✅ URL → Genome card
+✅ One Claude call → LinkedIn + thread + carousel copy + VO script + captions
+✅ 4 fal images, in the brand palette
+✅ ElevenLabs cloned VO + the DOM vertical player
+✅ Direct publish → Bluesky + Telegram (NOT via n8n)
+✅ Cached demo path, verified offline
+✅ Deployed URL
+─── P1, in this order ───
+◻ n8n nightly loop (30 min — the highest-innovation item left)
+◻ German dub (one API call, big wow)
+✂ CUT: audio note · calendar · Mastodon · mp4 export · wf-publish in n8n
+```
+
+### Two-person rules
+- **Never both debug the same thing.** You have no slack. Split, then report.
+- **15-minute rule is now a 10-minute rule.** Stuck 10 min → say it out loud → swap or cut.
+- P2 builds **for the camera**. Every screen gets screen-recorded at 15:15; if it looks bad in a
+  recording it *is* bad, regardless of how it feels in the browser.
+- The live round: **P2 narrates, P1 drives.** Decide this now, don't negotiate it at 17:25.
+
+---
+
+# Reference: the 4-lane split
+
+Below is the full split for larger teams. **Read it for the lane deliverables and success tests** —
+the 2-person table above is just a remapping of these.
 
 | Team size | Collapse to |
 |---|---|
 | **4** | A · B · C · D as written |
 | **3** | A+C (one backend person owns Genome + publish), B, D |
-| **2** | Person 1: A+B+C (all backend). Person 2: D (all frontend) + owns the video and deck. |
+| **2** | ⭐ see the plan above |
 | **1** | Cut to: Genome card + copy + one fal image + one real Bluesky post. Skip video/audio. Still a strong submission. |
 
 ---
